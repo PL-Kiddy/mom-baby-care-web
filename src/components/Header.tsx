@@ -1,18 +1,19 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Header: React.FC = () => {
   return (
     <header className="bg-white dark:bg-[#2d1b20] sticky top-0 z-50 border-b border-[#fce7ef] dark:border-[#3d262b]">
       <div className="px-4 md:px-10 lg:px-40 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
-          <a className="flex items-center gap-2 text-text-main dark:text-white group" href="#">
+          <Link to="/" className="flex items-center gap-2 text-text-main dark:text-white group">
             <div className="size-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-[28px]">child_care</span>
             </div>
             <h1 className="text-xl font-bold tracking-tight hidden md:block">
               Mom&amp;Baby<span className="text-primary">Care</span>
             </h1>
-          </a>
+          </Link>
         </div>
 
         <div className="flex-1 max-w-[600px] hidden md:block">
@@ -30,14 +31,20 @@ const Header: React.FC = () => {
           <button className="md:hidden p-2 text-text-main dark:text-white rounded-full hover:bg-black/5 dark:hover:bg-white/10">
             <span className="material-symbols-outlined">search</span>
           </button>
-          <button className="relative p-2.5 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white group">
+          <Link 
+            to="/cart" 
+            className="relative p-2.5 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white group"
+          >
             <span className="material-symbols-outlined">shopping_cart</span>
             <span className="absolute top-1.5 right-1.5 size-2.5 bg-primary rounded-full border-2 border-white dark:border-[#2d1b20]"></span>
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white font-bold text-sm">
+          </Link>
+          <Link 
+            to="/login" 
+            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white font-bold text-sm"
+          >
             <span className="material-symbols-outlined">account_circle</span>
             <span className="hidden sm:block">Đăng nhập</span>
-          </button>
+          </Link>
         </div>
       </div>
 

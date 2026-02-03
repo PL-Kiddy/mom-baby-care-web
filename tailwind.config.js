@@ -10,6 +10,7 @@ export default {
       colors: {
         primary: "#ff8fa3",
         "primary-hover": "#f4728e",
+        "primary-dark": "#e65a78",
         "background-light": "#fff5f7",
         "background-dark": "#2d1b20",
         "text-main": "#4a1d26",
@@ -22,6 +23,7 @@ export default {
         DEFAULT: "0.5rem",
         lg: "1rem",
         xl: "1.5rem",
+        "2xl": "2rem",
         full: "9999px",
       },
     },
