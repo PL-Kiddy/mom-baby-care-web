@@ -1,11 +1,11 @@
 import React from 'react';
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
-import CategoriesSection from '../components/CategoriesSection';
-import ProductsSection from '../components/ProductsSection';
-import BlogSection from '../components/BlogSection';
-import NewsletterSection from '../components/NewsletterSection';
-import Footer from '../components/Footer';
+import Header from '../../components/Header';
+import HeroSection from '../../components/HeroSection';
+import CategoriesSection from '../../components/CategoriesSection';
+import ProductsSection from '../../components/ProductsSection';
+import BlogSection from '../../components/BlogSection';
+import NewsletterSection from '../../components/NewsletterSection';
+import Footer from '../../components/Footer';
 
 const Home: React.FC = () => {
   return (
@@ -24,3 +24,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header: React.FC = () => {
+  const { totalItems } = useCart();
+  const { isAuthenticated } = useAuth();
   return (
     <header className="bg-white dark:bg-[#2d1b20] sticky top-0 z-50 border-b border-[#fce7ef] dark:border-[#3d262b]">
       <div className="px-4 md:px-10 lg:px-40 py-3 flex items-center justify-between gap-4">
@@ -36,39 +40,66 @@ const Header: React.FC = () => {
             className="relative p-2.5 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white group"
           >
             <span className="material-symbols-outlined">shopping_cart</span>
-            <span className="absolute top-1.5 right-1.5 size-2.5 bg-primary rounded-full border-2 border-white dark:border-[#2d1b20]"></span>
+            {totalItems > 0 && (
+              <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-primary rounded-full border-2 border-white dark:border-[#2d1b20] text-[10px] font-bold flex items-center justify-center">
+                {totalItems > 99 ? '99+' : totalItems}
+              </span>
+            )}
           </Link>
-          <Link 
-            to="/login" 
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white font-bold text-sm"
-          >
-            <span className="material-symbols-outlined">account_circle</span>
-            <span className="hidden sm:block">Đăng nhập</span>
-          </Link>
+          {isAuthenticated ? (
+            <Link 
+              to="/account" 
+              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white font-bold text-sm"
+            >
+              <span className="material-symbols-outlined">account_circle</span>
+              <span className="hidden sm:block">Tài khoản</span>
+            </Link>
+          ) : (
+            <Link 
+              to="/login" 
+              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[#fff0f4] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white font-bold text-sm"
+            >
+              <span className="material-symbols-outlined">account_circle</span>
+              <span className="hidden sm:block">Đăng nhập</span>
+            </Link>
+          )}
         </div>
       </div>
 
       <nav className="hidden md:flex justify-center border-t border-[#fce7ef] dark:border-[#3d262b] bg-white/50 dark:bg-[#2d1b20]/50 backdrop-blur-sm">
         <div className="flex gap-8 py-3">
-          <a className="text-text-main dark:text-gray-200 text-sm font-bold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5" href="#">
+          <Link
+            to="/"
+            className="text-text-main dark:text-gray-200 text-sm font-bold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5"
+          >
             Trang chủ
-          </a>
-          <a className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5" href="#">
+          </Link>
+          <button
+            className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5"
+          >
             Sữa cho mẹ
-          </a>
-          <a className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5" href="#">
-            Sữa cho bé
-          </a>
-          <a className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5" href="#">
+          </button>
+          <Link
+            to="/products"
+            className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5"
+          >
+            Danh sách sản phẩm
+          </Link>
+          <button
+            className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5"
+          >
             Ăn dặm
-          </a>
-          <a className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5" href="#">
+          </button>
+          <Link
+            to="/posts"
+            className="text-text-main dark:text-gray-200 text-sm font-semibold hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary pb-0.5"
+          >
             Bài viết sức khỏe
-          </a>
-          <a className="text-rose-500 text-sm font-extrabold hover:text-rose-600 transition-colors flex items-center gap-1" href="#">
+          </Link>
+          <button className="text-rose-500 text-sm font-extrabold hover:text-rose-600 transition-colors flex items-center gap-1">
             <span className="material-symbols-outlined text-[16px]">local_offer</span>
             Ưu đãi
-          </a>
+          </button>
         </div>
       </nav>
     </header>
