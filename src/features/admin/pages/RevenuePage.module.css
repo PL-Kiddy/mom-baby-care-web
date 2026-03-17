@@ -1,0 +1,10 @@
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .summaryRow { grid-template-columns: repeat(2, 1fr); }
+}

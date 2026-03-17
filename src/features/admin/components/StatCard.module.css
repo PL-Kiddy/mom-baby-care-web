@@ -1,0 +1,21 @@
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  transition: transform .2s, border-color .2s; backdrop-filter: blur(8px);
+}
+.card:hover { transform: translateY(-2px); }
+.top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.label { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .6px; line-height: 1.4; }
+.iconBox { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.iconBox.orange { background: rgba(108,142,255,.12); color: var(--accent); }
+.iconBox.pink   { background: rgba(192,132,252,.12); color: var(--pink); }
+.iconBox.teal   { background: rgba(52,211,153,.12);  color: var(--teal); }
+.iconBox.gold   { background: rgba(251,191,36,.12);  color: var(--gold); }
+.value { font-size: 28px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px; }
+.value.orange { color: var(--accent); }
+.value.pink   { color: var(--pink); }
+.value.teal   { color: var(--teal); }
+.value.gold   { color: var(--gold); }
+.change { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.change.up   { color: var(--green); }
+.change.down { color: var(--red); }

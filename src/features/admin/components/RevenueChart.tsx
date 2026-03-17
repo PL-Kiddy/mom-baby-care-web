@@ -1,0 +1,85 @@
+import { useState } from 'react'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid,
+} from 'recharts'
+import type { TooltipProps } from 'recharts'
+import styles from './RevenueChart.module.css'
+
+interface MonthData {
+  month: string
+  revenue: number
+  orders: number
+}
+
+const DATA_6M: MonthData[] = [
+  { month: 'T10', revenue: 95,  orders: 55 },
+  { month: 'T11', revenue: 112, orders: 68 },
+  { month: 'T12', revenue: 88,  orders: 80 },
+  { month: 'T1',  revenue: 120, orders: 70 },
+  { month: 'T2',  revenue: 105, orders: 62 },
+  { month: 'T3',  revenue: 128, orders: 85 },
+]
+
+const DATA_1Y: MonthData[] = [
+  { month: 'T4',  revenue: 72,  orders: 40 },
+  { month: 'T5',  revenue: 80,  orders: 48 },
+  { month: 'T6',  revenue: 65,  orders: 35 },
+  { month: 'T7',  revenue: 90,  orders: 55 },
+  { month: 'T8',  revenue: 85,  orders: 50 },
+  { month: 'T9',  revenue: 78,  orders: 45 },
+  { month: 'T10', revenue: 95,  orders: 55 },
+  { month: 'T11', revenue: 112, orders: 68 },
+  { month: 'T12', revenue: 88,  orders: 80 },
+  { month: 'T1',  revenue: 120, orders: 70 },
+  { month: 'T2',  revenue: 105, orders: 62 },
+  { month: 'T3',  revenue: 128, orders: 85 },
+]
+
+function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className={styles.tooltip}>
+      <div className={styles.tooltipLabel}>{label}</div>
+      <div style={{ color: 'var(--accent)' }}>Doanh thu: {payload[0]?.value}M ₫</div>
+      <div style={{ color: 'var(--teal)' }}>Đơn hàng: {payload[1]?.value}</div>
+    </div>
+  )
+}
+
+export default function RevenueChart() {
+  const [period, setPeriod] = useState<'6m' | '1y'>('6m')
+  const data = period === '6m' ? DATA_6M : DATA_1Y
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <span className="card-title">Doanh thu theo tháng</span>
+        <div className="tab-row" style={{ marginBottom: 0 }}>
+          <button className={`tab ${period === '6m' ? 'active' : ''}`} onClick={() => setPeriod('6m')}>6 tháng</button>
+          <button className={`tab ${period === '1y' ? 'active' : ''}`} onClick={() => setPeriod('1y')}>1 năm</button>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={160}>
+        <BarChart data={data} barGap={4}>
+          <CartesianGrid stroke="rgba(31,38,64,.6)" vertical={false} />
+          <XAxis dataKey="month" tick={{ fill: 'var(--muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis hide />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(108,142,255,.05)' }} />
+          <Bar dataKey="revenue" fill="var(--accent)" radius={[6, 6, 0, 0]} maxBarSize={28} />
+          <Bar dataKey="orders"  fill="var(--teal)"   radius={[6, 6, 0, 0]} maxBarSize={28} />
+        </BarChart>
+      </ResponsiveContainer>
+      <div className={styles.legend}>
+        <div className={styles.legendItem}>
+          <div className={styles.dot} style={{ background: 'var(--accent)' }} />
+          Doanh thu (triệu ₫)
+        </div>
+        <div className={styles.legendItem}>
+          <div className={styles.dot} style={{ background: 'var(--teal)' }} />
+          Đơn hàng
+        </div>
+      </div>
+    </div>
+  )
+}

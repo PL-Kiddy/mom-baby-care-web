@@ -1,0 +1,9 @@
+.tooltip {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; font-size: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.tooltipLabel { color: var(--text); font-weight: 600; margin-bottom: 4px; }
+.legend { display: flex; gap: 16px; margin-top: 12px; }
+.legendItem { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 3px; }

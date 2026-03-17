@@ -1,0 +1,5 @@
+.orderId { color: var(--accent); font-weight: 600; }
+.total   { color: var(--green); font-weight: 600; }
+.time    { color: var(--muted); font-size: 12px; }
+.link    { color: var(--accent); cursor: pointer; font-size: 12px; }
+.link:hover { text-decoration: underline; }
