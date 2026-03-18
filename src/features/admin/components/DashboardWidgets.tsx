@@ -1,12 +1,14 @@
-import type { ReactNode } from 'react'
+import type { JSX, ReactNode } from 'react'
 import type { IconProps } from '../../../shared/types'
 import {
   IconProduct, IconVoucher, IconPost, IconChart, IconEye, IconWarning,
 } from '../../../shared/components/Icons'
 
+type IconComponent = (props: IconProps) => JSX.Element
+
 // ─── Quick Actions ────────────────────────────────────────────────────────────
 interface Action {
-  Icon: React.ComponentType<IconProps>
+  Icon: IconComponent
   label: string
   color: string
 }
@@ -80,7 +82,6 @@ export function TopProducts() {
         <span className="card-title">Sản phẩm bán chạy</span>
         <span className="card-action">Xem thêm</span>
       </div>
-      <div className={styles.productList}>
       <div className="flex flex-col gap-3.5">
         {TOP_PRODUCTS.map((p, i) => (
           <div key={p.name} className="flex items-center gap-3 text-[13px]">
@@ -114,7 +115,7 @@ export function TopProducts() {
 
 // ─── Activity Feed ────────────────────────────────────────────────────────────
 interface Activity {
-  Icon: React.ComponentType<IconProps>
+  Icon: IconComponent
   bg: string
   iconColor: string
   text: ReactNode
