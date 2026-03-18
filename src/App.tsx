@@ -1,24 +1,83 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import Cart from './pages/Cart';
-import './index.css';
+import { Routes, Route, Navigate } from 'react-router-dom'
 
-const App: React.FC = () => {
+// Public shop pages (Guest/Member)
+import HomePage from './features/shop/pages/HomePage'
+import ProductListPage from './features/shop/pages/ProductListPage'
+import ProductDetailPage from './features/shop/pages/ProductDetailPage'
+import BlogListPage from './features/shop/pages/BlogListPage'
+import AccountProfilePage from './features/shop/pages/AccountProfilePage'
+import AccountOrdersPage from './features/shop/pages/AccountOrdersPage'
+import CustomerRegisterPage from './features/shop/pages/CustomerRegisterPage'
+import CustomerForgotPasswordPage from './features/shop/pages/CustomerForgotPasswordPage'
+import CartPage from './features/shop/pages/CartPage'
+
+// Admin/Staff auth + layouts
+import LoginPage from './features/auth/pages/LoginPage'
+import ProtectedRoute from './shared/components/ProtectedRoute'
+import RootRedirect from './shared/components/RootRedirect'
+
+import AdminLayout from './features/admin/layout/AdminLayout'
+import DashboardPage from './features/admin/pages/DashboardPage'
+import OrdersPage from './features/admin/pages/OrdersPage'
+import ProductsPage from './features/admin/pages/ProductsPage'
+import AccountsPage from './features/admin/pages/AccountsPage'
+import VouchersPage from './features/admin/pages/VouchersPage'
+import PostsPage from './features/admin/pages/PostsPage'
+import RevenuePage from './features/admin/pages/RevenuePage'
+
+import StaffLayout from './features/staff/layout/StaffLayout'
+import OrderConfirmPage from './features/staff/pages/OrderConfirmPage'
+import TrackingPage from './features/staff/pages/TrackingPage'
+import InventoryPage from './features/staff/pages/InventoryPage'
+import ReportsPage from './features/staff/pages/ReportsPage'
+import StaffVouchersPage from './features/staff/pages/VouchersPage'
+import StaffPostsPage from './features/staff/pages/PostsPage'
+import ChatPage from './features/staff/pages/ChatPage'
+
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/cart" element={<Cart />} />
-      </Routes>
-    </Router>
-  );
-};
+    <Routes>
+      {/* Public shop (Guest/Member) */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<CustomerRegisterPage />} />
+      <Route path="/forgot-password" element={<CustomerForgotPasswordPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/products" element={<ProductListPage />} />
+      <Route path="/products/:id" element={<ProductDetailPage />} />
+      <Route path="/blog" element={<BlogListPage />} />
+      <Route path="/account/profile" element={<AccountProfilePage />} />
+      <Route path="/account/orders" element={<AccountOrdersPage />} />
 
-export default App;
+      {/* Admin/Staff auth portal (giữ path cũ, redirect về /login) */}
+      <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+      <Route path="/portal" element={<RootRedirect />} />
+
+      {/* Admin — role: admin */}
+      <Route element={<ProtectedRoute allowedRole="admin" />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="accounts" element={<AccountsPage />} />
+          <Route path="vouchers" element={<VouchersPage />} />
+          <Route path="posts" element={<PostsPage />} />
+          <Route path="revenue" element={<RevenuePage />} />
+        </Route>
+      </Route>
+
+      {/* Staff — role: staff */}
+      <Route element={<ProtectedRoute allowedRole="staff" />}>
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route path="orders" element={<OrderConfirmPage />} />
+          <Route path="tracking" element={<TrackingPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="vouchers" element={<StaffVouchersPage />} />
+          <Route path="posts" element={<StaffPostsPage />} />
+          <Route path="chat" element={<ChatPage />} />
+        </Route>
+      </Route>
+    </Routes>
+  )
+}

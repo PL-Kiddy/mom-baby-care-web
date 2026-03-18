@@ -5,7 +5,6 @@ import {
 } from '../../../shared/components/Icons'
 import { useAuth } from '../../../shared/hooks/useAuth'
 import type { NavGroup } from '../../../shared/types'
-import styles from './Sidebar.module.css'
 
 const NAV: NavGroup[] = [
   { section: 'Tổng quan', items: [
@@ -29,36 +28,65 @@ export default function Sidebar() {
   const initials = user?.name.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase() ?? 'A'
 
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.logo}>
-        <div className={styles.logoIcon}><IconMilk size={22} color="var(--accent)" /></div>
+    <aside className="w-[260px] min-h-screen bg-white border-r border-[#fce7ef] fixed top-0 left-0 z-40 flex flex-col shadow-sm">
+      <div className="px-5 py-5 border-b border-[#fce7ef] flex items-center gap-3">
+        <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <IconMilk size={22} color="var(--accent)" />
+        </div>
         <div>
-          <div className={styles.logoTitle}>MilkCare</div>
-          <div className={styles.logoSub}>Admin Portal</div>
+          <div className="text-[15px] font-bold tracking-tight text-text-main">
+            MilkCare
+          </div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-text-muted font-semibold">
+            Admin Portal
+          </div>
         </div>
       </div>
-      <nav className={styles.nav}>
+      <nav className="flex-1 px-2.5 py-3 overflow-y-auto">
         {NAV.map(group => (
           <div key={group.section}>
-            <div className={styles.navSection}>{group.section}</div>
+            <div className="px-2 pt-3 pb-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-text-muted">
+              {group.section}
+            </div>
             {group.items.map(({ to, Icon, label, badge }) => (
               <NavLink key={to} to={to}
-                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
-                <span className={styles.iconWrap}><Icon size={16} /></span>
+                className={({ isActive }) =>
+                  [
+                    'flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-1 text-sm font-medium transition-all',
+                    'text-text-muted hover:text-text-main hover:bg-[#fff0f4]',
+                    isActive ? 'bg-primary/10 text-primary border-l-2 border-primary pl-2.5' : 'border-l-2 border-transparent',
+                  ].join(' ')
+                }>
+                <span className="w-5 flex items-center justify-center opacity-80">
+                  <Icon size={16} />
+                </span>
                 {label}
-                {badge !== undefined && <span className={styles.badge}>{badge}</span>}
+                {badge !== undefined && (
+                  <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary text-white">
+                    {badge}
+                  </span>
+                )}
               </NavLink>
             ))}
           </div>
         ))}
       </nav>
-      <div className={styles.footer}>
-        <div className={styles.adminAvatar}>{initials}</div>
-        <div className={styles.adminMeta}>
-          <div className={styles.adminName}>{user?.name ?? 'Admin'}</div>
-          <div className={styles.adminRole}>{user?.email}</div>
+      <div className="px-4 py-3 border-t border-[#fce7ef] flex items-center gap-3 bg-background-light/40">
+        <div className="size-9 rounded-xl bg-gradient-to-tr from-primary to-rose-400 text-white flex items-center justify-center text-xs font-bold">
+          {initials}
         </div>
-        <button className={styles.logoutBtn} onClick={() => { logout(); navigate('/login', { replace: true }) }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-text-main truncate">
+            {user?.name ?? 'Admin'}
+          </div>
+          <div className="text-[11px] text-text-muted truncate">
+            {user?.email}
+          </div>
+        </div>
+        <button
+          className="p-1.5 rounded-lg text-text-muted hover:text-rose-500 hover:bg-rose-50 transition-colors flex items-center"
+          onClick={() => { logout(); navigate('/login', { replace: true }) }}
+        >
           <IconLogout size={15} />
         </button>
       </div>

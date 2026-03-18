@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-const ForgotPassword = () => {
+const CustomerForgotPasswordPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -136,7 +136,7 @@ const ForgotPassword = () => {
         Quay lại trang chủ
       </Link>
     </div>
-  );
-};
+  )
+}
 
-export default ForgotPassword;
+export default CustomerForgotPasswordPage;

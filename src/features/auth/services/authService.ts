@@ -35,13 +35,17 @@ export async function logoutApi(token: string): Promise<void> {
 export async function mockLogin(credentials: LoginCredentials): Promise<AuthResponse> {
   await new Promise((r) => setTimeout(r, 800))
   const MOCK: Record<string, AuthResponse> = {
-    'admin@milkcare.com': {
+    'admin@gmail.com': {
       token: 'mock-admin-token-xyz',
-      user: { id: '1', name: 'Admin MilkCare', email: 'admin@milkcare.com', role: 'admin' },
+      user: { id: '1', name: 'Admin MilkCare', email: 'admin@gmail.com', role: 'admin' },
     },
-    'staff@milkcare.com': {
+    'staff@gmail.com': {
       token: 'mock-staff-token-abc',
-      user: { id: '2', name: 'Nhân viên A', email: 'staff@milkcare.com', role: 'staff' },
+      user: { id: '2', name: 'Nhân viên A', email: 'staff@gmail.com', role: 'staff' },
+    },
+    'member@gmail.com': {
+      token: 'mock-member-token-123',
+      user: { id: '3', name: 'Mẹ Demo', email: 'member@gmail.com', role: 'member' },
     },
   }
   const match = MOCK[credentials.email]

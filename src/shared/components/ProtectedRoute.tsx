@@ -11,7 +11,9 @@ export default function ProtectedRoute({ allowedRole }: Props) {
   if (isLoading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />
   if (user.role !== allowedRole) {
-    return <Navigate to={user.role === 'admin' ? '/dashboard' : '/staff/orders'} replace />
+    if (user.role === 'admin')  return <Navigate to="/admin/dashboard" replace />
+    if (user.role === 'staff')  return <Navigate to="/staff/orders" replace />
+    return <Navigate to="/" replace />
   }
   return <Outlet />
 }

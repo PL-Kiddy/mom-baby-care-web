@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconPlus } from '../../../shared/components/Icons'
 import type { Voucher } from '../../../shared/types'
-import styles from './TablePage.module.css'
 
 const VOUCHERS: Voucher[] = [
   { code: 'WELCOME20', type: 'Phần trăm', value: '20%',       minOrder: '200,000 ₫', used: 45,  limit: 100, expires: '31/03/2025', status: 'active' },
@@ -19,7 +18,7 @@ export default function VouchersPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 280 }}
@@ -73,9 +72,13 @@ export default function VouchersPage() {
                     </span>
                   </td>
                   <td>
-                    <span className={styles.link}>Sửa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Sửa
+                    </span>
                     {' · '}
-                    <span className={styles.link}>Xóa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Xóa
+                    </span>
                   </td>
                 </tr>
               ))}

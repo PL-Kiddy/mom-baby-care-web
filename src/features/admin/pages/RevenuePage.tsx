@@ -5,7 +5,6 @@ import {
 import type { TooltipProps } from 'recharts'
 import { IconRevenue, IconChart, IconOrder, IconDashboard } from '../../../shared/components/Icons'
 import type { IconProps } from '../../../shared/types'
-import styles from './RevenuePage.module.css'
 
 interface MonthData  { month: string; revenue: number }
 interface ProductData { name: string;  revenue: number }
@@ -60,7 +59,7 @@ export default function RevenuePage() {
   return (
     <div>
       {/* Summary cards */}
-      <div className={styles.summaryRow}>
+      <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {SUMMARY.map((s) => (
           <div className="card" key={s.label} style={{ textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, color: s.color }}>

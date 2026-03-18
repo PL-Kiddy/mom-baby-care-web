@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconAlertCircle, IconCheckCircle, IconEye } from '../../../shared/components/Icons'
 import type { ReportItem } from '../../../shared/types'
-import styles from './StaffPage.module.css'
 
 const REPORTS: ReportItem[] = [
   { id: 'R001', type: 'complaint', customer: 'Nguyễn Thị Mai',   orderId: '#ORD-0350', content: 'Sản phẩm giao sai, nhận được Similac 2 thay vì Similac 4',          status: 'open',       priority: 'high',   createdAt: '10/03/2025' },
@@ -49,16 +48,32 @@ export default function ReportsPage() {
   return (
     <div>
       {/* Summary */}
-      <div className={styles.summaryRow}>
+      <div className="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Chưa xử lý',    value: reports.filter(r => r.status === 'open').length,       color: 'red' },
           { label: 'Đang xử lý',    value: reports.filter(r => r.status === 'processing').length,  color: 'gold' },
           { label: 'Đã giải quyết', value: reports.filter(r => r.status === 'resolved').length,    color: 'green' },
           { label: 'Ưu tiên cao',   value: reports.filter(r => r.priority === 'high').length,      color: 'blue' },
         ].map((s) => (
-          <div key={s.label} className={`card ${styles.summaryCard}`}>
-            <div className={`${styles.summaryValue} ${styles[s.color]}`}>{s.value}</div>
-            <div className={styles.summaryLabel}>{s.label}</div>
+          <div
+            key={s.label}
+            className="card flex flex-col gap-1.5 text-center"
+          >
+            <div
+              className={[
+                'text-2xl font-bold tracking-[-0.5px]',
+                s.color === 'red'
+                  ? 'text-[var(--red)]'
+                  : s.color === 'gold'
+                    ? 'text-[var(--gold)]'
+                    : s.color === 'green'
+                      ? 'text-[var(--teal)]'
+                      : 'text-[var(--accent)]',
+              ].join(' ')}
+            >
+              {s.value}
+            </div>
+            <div className="text-[12px] text-[var(--muted)]">{s.label}</div>
           </div>
         ))}
       </div>
@@ -110,15 +125,39 @@ export default function ReportsPage() {
                   <td><span className={`status-badge ${r.status === 'open' ? 'cancelled' : r.status === 'processing' ? 'pending' : 'completed'}`}>{STATUS_LABEL[r.status]}</span></td>
                   <td style={{ color: 'var(--muted)', fontSize: 12 }}>{r.createdAt}</td>
                   <td>
-                    <div className={styles.actionGroup}>
-                      <button className={styles.iconBtn}><IconEye size={14} /></button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        className="
+                          flex h-7 w-7 items-center justify-center rounded-md
+                          border border-[var(--border)] bg-[var(--surface2)]
+                          text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]
+                        "
+                      >
+                        <IconEye size={14} />
+                      </button>
                       {r.status === 'open' && (
-                        <button className={`${styles.iconBtn} ${styles.confirm}`} onClick={() => process(r.id)} title="Tiếp nhận">
+                        <button
+                          className="
+                            flex h-7 w-7 items-center justify-center rounded-md
+                            border border-[rgba(234,179,8,0.4)] bg-[rgba(234,179,8,0.08)]
+                            text-[var(--gold)] transition-colors hover:border-[var(--gold)]
+                          "
+                          onClick={() => process(r.id)}
+                          title="Tiếp nhận"
+                        >
                           <IconAlertCircle size={14} />
                         </button>
                       )}
                       {r.status === 'processing' && (
-                        <button className={`${styles.iconBtn} ${styles.confirm}`} onClick={() => resolve(r.id)} title="Đánh dấu giải quyết">
+                        <button
+                          className="
+                            flex h-7 w-7 items-center justify-center rounded-md
+                            border border-[rgba(52,211,153,0.5)] bg-[rgba(52,211,153,0.12)]
+                            text-[var(--teal)] transition-colors hover:border-[var(--teal)]
+                          "
+                          onClick={() => resolve(r.id)}
+                          title="Đánh dấu giải quyết"
+                        >
                           <IconCheckCircle size={14} />
                         </button>
                       )}

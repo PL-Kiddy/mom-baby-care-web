@@ -20,10 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verify = async () => {
       try {
         if (saved.startsWith('mock-admin')) {
-          setUser({ id: '1', name: 'Admin MilkCare', email: 'admin@milkcare.com', role: 'admin' })
+          setUser({ id: '1', name: 'Admin MilkCare', email: 'admin@gmail.com', role: 'admin' })
           setToken(saved)
         } else if (saved.startsWith('mock-staff')) {
-          setUser({ id: '2', name: 'Nhân viên A', email: 'staff@milkcare.com', role: 'staff' })
+          setUser({ id: '2', name: 'Nhân viên A', email: 'staff@gmail.com', role: 'staff' })
+          setToken(saved)
+        } else if (saved.startsWith('mock-member')) {
+          setUser({ id: '3', name: 'Mẹ Demo', email: 'member@gmail.com', role: 'member' })
           setToken(saved)
         } else {
           const me = await getMeApi(saved)

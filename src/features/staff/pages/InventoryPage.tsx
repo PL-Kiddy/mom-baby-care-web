@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconWarning, IconPlus, IconArrowUp } from '../../../shared/components/Icons'
 import type { InventoryItem } from '../../../shared/types'
-import styles from './StaffPage.module.css'
 
 const ITEMS: InventoryItem[] = [
   { id: 'SP001', name: 'Similac Gain IQ 4',    category: 'Sữa trẻ em',  sku: 'SIM-GIQ-4',   stock: 120, minStock: 20, incoming: 0,   unit: 'hộp', lastUpdated: '10/03/2025' },
@@ -47,21 +46,37 @@ export default function InventoryPage() {
   return (
     <div>
       {/* Summary */}
-      <div className={styles.summaryRow}>
+      <div className="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Tổng sản phẩm',  value: ITEMS.length, color: 'blue' },
           { label: 'Sắp hết hàng',   value: lowStock,      color: 'gold' },
           { label: 'Hết hàng',       value: outStock,       color: 'red'  },
           { label: 'Hàng sắp về',    value: ITEMS.filter(i => i.incoming > 0).length, color: 'green' },
         ].map((s) => (
-          <div key={s.label} className={`card ${styles.summaryCard}`}>
-            <div className={`${styles.summaryValue} ${styles[s.color]}`}>{s.value}</div>
-            <div className={styles.summaryLabel}>{s.label}</div>
+          <div
+            key={s.label}
+            className="card flex flex-col gap-1.5 text-center"
+          >
+            <div
+              className={[
+                'text-2xl font-bold tracking-[-0.5px]',
+                s.color === 'red'
+                  ? 'text-[var(--red)]'
+                  : s.color === 'gold'
+                    ? 'text-[var(--gold)]'
+                    : s.color === 'green'
+                      ? 'text-[var(--teal)]'
+                      : 'text-[var(--accent)]',
+              ].join(' ')}
+            >
+              {s.value}
+            </div>
+            <div className="text-[12px] text-[var(--muted)]">{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 280 }}
@@ -76,7 +91,7 @@ export default function InventoryPage() {
             </button>
           ))}
         </div>
-        <button className="btn btn-primary" style={{ marginLeft: 'auto' }}>
+        <button className="btn btn-primary ml-auto">
           <IconPlus size={14} /> Nhập hàng
         </button>
       </div>
@@ -121,9 +136,13 @@ export default function InventoryPage() {
                   </td>
                   <td style={{ color: 'var(--muted)', fontSize: 12 }}>{item.lastUpdated}</td>
                   <td>
-                    <span className={styles.link}>Nhập kho</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Nhập kho
+                    </span>
                     {' · '}
-                    <span className={styles.link}>Sửa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Sửa
+                    </span>
                   </td>
                 </tr>
               ))}

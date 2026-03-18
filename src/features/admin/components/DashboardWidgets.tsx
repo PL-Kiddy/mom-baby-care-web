@@ -3,7 +3,6 @@ import type { IconProps } from '../../../shared/types'
 import {
   IconProduct, IconVoucher, IconPost, IconChart, IconEye, IconWarning,
 } from '../../../shared/components/Icons'
-import styles from './DashboardWidgets.module.css'
 
 // ─── Quick Actions ────────────────────────────────────────────────────────────
 interface Action {
@@ -25,10 +24,31 @@ export function QuickActions() {
       <div className="card-header">
         <span className="card-title">Thao tác nhanh</span>
       </div>
-      <div className={styles.actionsList}>
+      <div className="flex flex-col gap-1.5">
         {ACTIONS.map(({ Icon, label, color }) => (
-          <button key={label} className={styles.actionBtn}>
-            <span className={`${styles.actionIcon} ${styles[color]}`}>
+          <button
+            key={label}
+            className="
+              flex items-center gap-3 rounded-[9px]
+              border border-[var(--border)] bg-[var(--surface2)]
+              px-3.5 py-[11px] text-left text-[13px] font-medium text-[var(--text)]
+              transition-colors hover:border-[var(--accent)] hover:bg-[rgba(108,142,255,0.06)] hover:text-[var(--accent)]
+            "
+          >
+            <span
+              className={`
+                flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[8px]
+                ${
+                  color === 'blue'
+                    ? 'bg-[rgba(108,142,255,0.15)] text-[var(--accent)]'
+                    : color === 'purple'
+                      ? 'bg-[rgba(192,132,252,0.15)] text-[var(--pink)]'
+                      : color === 'teal'
+                        ? 'bg-[rgba(52,211,153,0.15)] text-[var(--teal)]'
+                        : 'bg-[rgba(251,191,36,0.15)] text-[var(--gold)]'
+                }
+              `}
+            >
               <Icon size={15} />
             </span>
             {label}
@@ -61,17 +81,30 @@ export function TopProducts() {
         <span className="card-action">Xem thêm</span>
       </div>
       <div className={styles.productList}>
+      <div className="flex flex-col gap-3.5">
         {TOP_PRODUCTS.map((p, i) => (
-          <div key={p.name} className={styles.productRow}>
-            <div className={styles.productRank}>{i + 1}</div>
-            <div className={styles.productInfo}>
-              <div className={styles.productName}>{p.name}</div>
-              <div className={styles.productSub}>
+          <div key={p.name} className="flex items-center gap-3 text-[13px]">
+            <div
+              className="
+                flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center
+                rounded-[6px] border border-[var(--border)] bg-[var(--surface2)]
+                text-[11px] font-bold text-[var(--muted)]
+              "
+            >
+              {i + 1}
+            </div>
+            <div className="min-width-0 flex-1">
+              <div className="max-w-[220px] truncate text-[13px] font-medium">
+                {p.name}
+              </div>
+              <div className="mt-[2px] flex items-center gap-1 text-[11px] text-[var(--muted)]">
                 <IconEye size={11} color="var(--muted)" />
                 {p.orders} đơn tháng này
               </div>
             </div>
-            <div className={styles.productRevenue}>{p.revenue}</div>
+            <div className="whitespace-nowrap text-[13px] font-semibold text-[var(--accent)]">
+              {p.revenue}
+            </div>
           </div>
         ))}
       </div>
@@ -127,15 +160,25 @@ export function ActivityFeed() {
       <div className="card-header">
         <span className="card-title">Hoạt động gần đây</span>
       </div>
-      <div className={styles.activityList}>
+      <div className="flex flex-col gap-3.5">
         {ACTIVITIES.map(({ Icon, bg, iconColor, text, time }, i) => (
-          <div key={i} className={styles.activityItem}>
-            <div className={styles.actIcon} style={{ background: bg }}>
+          <div key={i} className="flex gap-3 text-[13px]">
+            <div
+              className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[8px]"
+              style={{ background: bg }}
+            >
               <Icon size={13} color={iconColor} />
             </div>
             <div>
-              <div className={styles.actText}>{text}</div>
-              <div className={styles.actTime}>{time}</div>
+              <div className="text-[12px] leading-relaxed text-[var(--muted)]">
+                <span className="font-semibold text-[var(--text)]">
+                  {/* bold phần strong đã render sẵn */}
+                </span>
+                {text}
+              </div>
+              <div className="mt-[3px] text-[11px] text-[var(--muted)]">
+                {time}
+              </div>
             </div>
           </div>
         ))}

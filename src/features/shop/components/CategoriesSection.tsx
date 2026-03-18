@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react'
+import { Link } from 'react-router-dom'
 
 const categories = [
   {
@@ -39,17 +40,20 @@ const CategoriesSection: React.FC = () => {
           <h2 className="text-text-main dark:text-white text-2xl md:text-[28px] font-extrabold leading-tight">
             Danh mục nổi bật
           </h2>
-          <a className="text-primary font-bold text-sm hover:text-primary-hover hover:underline flex items-center" href="#">
+          <Link
+            to="/products"
+            className="text-primary font-bold text-sm hover:text-primary-hover hover:underline flex items-center"
+          >
             Xem tất cả <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-          </a>
+          </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
           {categories.map((category, index) => (
-            <a
+            <Link
               key={index}
+              to="/products"
               className="group flex flex-col items-center gap-4 p-6 bg-white dark:bg-[#2d1b20] rounded-2xl border border-[#fce7ef] dark:border-[#3d262b] hover:shadow-lg hover:border-primary/40 transition-all duration-300"
-              href="#"
             >
               <div className={`size-24 rounded-full ${category.bgColor} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                 <span className={`material-symbols-outlined text-4xl ${category.iconColor}`}>
@@ -64,7 +68,7 @@ const CategoriesSection: React.FC = () => {
                   {category.subtitle}
                 </p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconPlus, IconEye } from '../../../shared/components/Icons'
 import type { Post } from '../../../shared/types'
-import styles from './TablePage.module.css'
 
 const POSTS: Post[] = [
   { id: 1, title: 'Dinh dưỡng cho mẹ bầu 3 tháng đầu',       category: 'Mẹ bầu', author: 'Admin', views: 1240, date: '08/03/2025', status: 'active' },
@@ -20,7 +19,7 @@ export default function PostsPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 320 }}
@@ -64,11 +63,17 @@ export default function PostsPage() {
                   <td style={{ color: 'var(--muted)' }}>{p.date}</td>
                   <td><span className={`status-badge ${p.status}`}>{p.status === 'active' ? 'Đã đăng' : 'Ẩn'}</span></td>
                   <td>
-                    <span className={styles.link}>Sửa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Sửa
+                    </span>
                     {' · '}
-                    <span className={styles.link}>{p.status === 'active' ? 'Ẩn' : 'Hiện'}</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      {p.status === 'active' ? 'Ẩn' : 'Hiện'}
+                    </span>
                     {' · '}
-                    <span className={styles.link}>Xóa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Xóa
+                    </span>
                   </td>
                 </tr>
               ))}

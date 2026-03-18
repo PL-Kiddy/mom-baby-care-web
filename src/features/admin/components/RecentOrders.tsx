@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { Order, OrderStatus } from '../../../shared/types'
-import styles from './RecentOrders.module.css'
 
 const ORDERS: Order[] = [
   { id: '#ORD-0381', customer: 'Nguyễn Thị Mai', phone: '0901234567', product: 'Similac Gain IQ',   total: '450,000 ₫',   status: 'pending',    time: '10 phút trước', payment: 'Chuyển khoản' },
@@ -51,20 +50,28 @@ export default function RecentOrders() {
           <tbody>
             {ORDERS.map((o) => (
               <tr key={o.id}>
-                <td className={styles.orderId}>{o.id}</td>
+                <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{o.id}</td>
                 <td>{o.customer}</td>
                 <td>{o.product}</td>
-                <td className={styles.total}>{o.total}</td>
+                <td style={{ color: 'var(--green)', fontWeight: 600 }}>{o.total}</td>
                 <td>
                   <span className={`status-badge ${o.status}`}>
                     {STATUS_LABEL[o.status]}
                   </span>
                 </td>
-                <td className={styles.time}>{o.time}</td>
+                <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.time}</td>
                 <td>
-                  <span className={styles.link}>Xem</span>
+                  <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                    Xem
+                  </span>
                   {o.status === 'pending' && (
-                    <> · <span className={styles.link}>Duyệt</span></>
+                    <>
+                      {' '}
+                      ·{' '}
+                      <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                        Duyệt
+                      </span>
+                    </>
                   )}
                 </td>
               </tr>

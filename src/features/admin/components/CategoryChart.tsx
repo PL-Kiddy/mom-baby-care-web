@@ -1,5 +1,4 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import styles from './CategoryChart.module.css'
 
 interface Category {
   name: string
@@ -22,7 +21,7 @@ export default function CategoryChart() {
       <div className="card-header">
         <span className="card-title">Danh mục sản phẩm</span>
       </div>
-      <div className={styles.wrap}>
+      <div className="relative mb-4 flex justify-center">
         <ResponsiveContainer width={140} height={140}>
           <PieChart>
             <Pie
@@ -47,17 +46,21 @@ export default function CategoryChart() {
             />
           </PieChart>
         </ResponsiveContainer>
-        <div className={styles.center}>
-          <div className={styles.centerVal}>{TOTAL_PRODUCTS}</div>
-          <div className={styles.centerLabel}>sản phẩm</div>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+          <div className="text-[26px] font-bold tracking-[-1px] text-[var(--accent)]">
+            {TOTAL_PRODUCTS}
+          </div>
+          <div className="text-[11px] text-[var(--muted)]">sản phẩm</div>
         </div>
       </div>
-      <div className={styles.legend}>
+      <div className="flex flex-col gap-2">
         {DATA.map((d) => (
-          <div className={styles.item} key={d.name}>
-            <div className={styles.dot} style={{ background: d.color }} />
+          <div className="flex items-center gap-2 text-[13px]" key={d.name}>
+            <div className="h-[10px] w-[10px] flex-shrink-0 rounded-full" style={{ background: d.color }} />
             <span>{d.name}</span>
-            <span className={styles.pct}>{d.value}%</span>
+            <span className="ml-auto text-[12px] text-[var(--muted)]">
+              {d.value}%
+            </span>
           </div>
         ))}
       </div>

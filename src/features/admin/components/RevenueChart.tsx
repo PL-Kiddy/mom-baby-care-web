@@ -4,7 +4,6 @@ import {
   ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import type { TooltipProps } from 'recharts'
-import styles from './RevenueChart.module.css'
 
 interface MonthData {
   month: string
@@ -39,8 +38,8 @@ const DATA_1Y: MonthData[] = [
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   return (
-    <div className={styles.tooltip}>
-      <div className={styles.tooltipLabel}>{label}</div>
+    <div className="flex flex-col gap-1 rounded-[10px] border border-[var(--border)] bg-[var(--surface2)] px-3.5 py-2.5 text-[12px]">
+      <div className="mb-1 font-semibold text-[var(--text)]">{label}</div>
       <div style={{ color: 'var(--accent)' }}>Doanh thu: {payload[0]?.value}M ₫</div>
       <div style={{ color: 'var(--teal)' }}>Đơn hàng: {payload[1]?.value}</div>
     </div>
@@ -70,13 +69,13 @@ export default function RevenueChart() {
           <Bar dataKey="orders"  fill="var(--teal)"   radius={[6, 6, 0, 0]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
-      <div className={styles.legend}>
-        <div className={styles.legendItem}>
-          <div className={styles.dot} style={{ background: 'var(--accent)' }} />
+      <div className="mt-3 flex gap-4 text-[12px] text-[var(--muted)]">
+        <div className="flex items-center gap-1.5">
+          <div className="h-[10px] w-[10px] rounded-[3px] bg-[var(--accent)]" />
           Doanh thu (triệu ₫)
         </div>
-        <div className={styles.legendItem}>
-          <div className={styles.dot} style={{ background: 'var(--teal)' }} />
+        <div className="flex items-center gap-1.5">
+          <div className="h-[10px] w-[10px] rounded-[3px] bg-[var(--teal)]" />
           Đơn hàng
         </div>
       </div>

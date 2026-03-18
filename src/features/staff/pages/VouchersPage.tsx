@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconPlus } from '../../../shared/components/Icons'
 import type { Voucher } from '../../../shared/types'
-import styles from './StaffPage.module.css'
 
 const VOUCHERS: Voucher[] = [
   { code: 'WELCOME20', type: 'Phần trăm', value: '20%',      minOrder: '200,000 ₫', used: 45,  limit: 100, expires: '31/03/2025', status: 'active' },
@@ -40,21 +39,30 @@ export default function StaffVouchersPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
-        <input className="input" style={{ maxWidth: 260 }} placeholder="Tìm mã voucher..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={() => setShowForm(!showForm)}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <input
+          className="input"
+          style={{ maxWidth: 260 }}
+          placeholder="Tìm mã voucher..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button
+          className="btn btn-primary ml-auto"
+          onClick={() => setShowForm(!showForm)}
+        >
           <IconPlus size={14} /> Tạo voucher mới
         </button>
       </div>
 
       {/* Create form */}
       {showForm && (
-        <div className={`card ${styles.formCard}`}>
+        <div className="card mb-4">
           <div className="card-header" style={{ marginBottom: 16 }}>
             <span className="card-title">Tạo Voucher mới</span>
             <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setShowForm(false)}>Hủy</button>
           </div>
-          <div className={styles.formGrid}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
               { label: 'Mã voucher *', key: 'code',     placeholder: 'VD: SUMMER30' },
               { label: 'Giá trị *',    key: 'value',    placeholder: 'VD: 20% hoặc 50000' },
@@ -62,19 +70,31 @@ export default function StaffVouchersPage() {
               { label: 'Giới hạn',     key: 'limit',    placeholder: 'VD: 100' },
               { label: 'Hết hạn',      key: 'expires',  placeholder: 'VD: 31/12/2025' },
             ].map(({ label, key, placeholder }) => (
-              <div key={key} className={styles.formGroup}>
-                <label className={styles.formLabel}>{label}</label>
+              <div key={key} className="space-y-1">
+                <label className="block text-[12px] font-medium text-[var(--muted)]">
+                  {label}
+                </label>
                 <input
                   className="input"
                   placeholder={placeholder}
                   value={form[key as keyof NewVoucher]}
-                  onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, [key]: e.target.value }))
+                  }
                 />
               </div>
             ))}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Loại</label>
-              <select className="input" value={form.type} onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}>
+            <div className="space-y-1">
+              <label className="block text-[12px] font-medium text-[var(--muted)]">
+                Loại
+              </label>
+              <select
+                className="input"
+                value={form.type}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, type: e.target.value }))
+                }
+              >
                 <option>Phần trăm</option>
                 <option>Cố định</option>
               </select>

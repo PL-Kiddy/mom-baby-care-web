@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconDownload, IconPlus } from '../../../shared/components/Icons'
 import type { Order, OrderStatus } from '../../../shared/types'
-import styles from './TablePage.module.css'
 
 const ORDERS: Order[] = [
   { id: '#ORD-0381', customer: 'Nguyễn Thị Mai', phone: '0901234567', product: 'Similac Gain IQ',   total: '450,000 ₫',   status: 'pending',    time: '10/03/2025', payment: 'Chuyển khoản' },
@@ -35,7 +34,7 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 300 }}
@@ -82,8 +81,18 @@ export default function OrdersPage() {
                   <td><span className={`status-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span></td>
                   <td style={{ color: 'var(--muted)' }}>{o.time}</td>
                   <td>
-                    <span className={styles.link}>Xem</span>
-                    {o.status === 'pending' && <> · <span className={styles.link}>Duyệt</span></>}
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Xem
+                    </span>
+                    {o.status === 'pending' && (
+                      <>
+                        {' '}
+                        ·{' '}
+                        <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                          Duyệt
+                        </span>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

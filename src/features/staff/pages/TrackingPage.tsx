@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconTruck, IconRefresh, IconEye } from '../../../shared/components/Icons'
 import type { TrackingOrder, TrackingStatus } from '../../../shared/types'
-import styles from './StaffPage.module.css'
 
 const ORDERS: TrackingOrder[] = [
   { id: '#ORD-0380', customer: 'Trần Hoa Linh',   phone: '0912345678', product: 'Nan Optipro 1',       total: '780,000 ₫',   address: '123 Nguyễn Huệ, Q.1, TP.HCM',     trackingCode: 'GHTK-AB12345', carrier: 'GHTK',      status: 'shipping',   updatedAt: '10/03 10:30' },
@@ -43,10 +42,10 @@ export default function TrackingPage() {
   })
 
   return (
-    <div className={styles.twoCol}>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr),minmax(0,1.3fr)]">
       {/* Left - table */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className={styles.toolbar}>
+        <div className="mb-5 flex flex-wrap items-center gap-3">
           <input
             className="input"
             style={{ maxWidth: 300 }}
@@ -107,30 +106,57 @@ export default function TrackingPage() {
       </div>
 
       {/* Right - detail panel */}
-      {selected ? (
-        <div className={styles.detailPanel}>
-          <div className={styles.detailHeader}>
+          {selected ? (
+        <div className="card h-full border border-[var(--border)] bg-[var(--surface)]">
+          <div className="mb-4 flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
             <div>
-              <div className={styles.detailOrderId}>{selected.id}</div>
+              <div className="text-[15px] font-semibold text-[var(--accent)]">
+                {selected.id}
+              </div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{selected.customer} · {selected.phone}</div>
             </div>
-            <button className={styles.closeBtn} onClick={() => setSelected(null)}>✕</button>
+            <button
+              className="
+                flex h-7 w-7 items-center justify-center rounded-md
+                border border-[var(--border)] text-[var(--muted)]
+                transition-colors hover:border-[var(--red)] hover:text-[var(--red)]
+              "
+              onClick={() => setSelected(null)}
+            >
+              ✕
+            </button>
           </div>
 
           {/* Timeline */}
-          <div className={styles.timeline}>
+          <div className="mb-5 space-y-3">
             {STATUS_STEPS.map((step, i) => {
               const steps = STATUS_STEPS
               const currentIdx = steps.indexOf(selected.status as TrackingStatus)
               const isDone = i <= currentIdx
               const isCurrent = i === currentIdx
               return (
-                <div key={step} className={styles.timelineStep}>
-                  <div className={`${styles.timelineDot} ${isDone ? styles.done : ''} ${isCurrent ? styles.current : ''}`}>
+                <div
+                  key={step}
+                  className="relative flex items-center gap-3"
+                >
+                  <div
+                    className={[
+                      'flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold',
+                      isDone
+                        ? 'border-[var(--teal)] bg-[rgba(52,211,153,0.15)] text-[var(--teal)]'
+                        : 'border-[var(--border)] bg-[var(--surface2)] text-[var(--muted)]',
+                      isCurrent ? 'ring-2 ring-[rgba(52,211,153,0.35)]' : '',
+                    ].join(' ')}
+                  >
                     {isDone && !isCurrent && <span style={{ fontSize: 10 }}>✓</span>}
                   </div>
                   <div>
-                    <div className={`${styles.timelineLabel} ${isCurrent ? styles.activeLabel : ''}`}>
+                    <div
+                      className={[
+                        'text-[13px] font-medium',
+                        isCurrent ? 'text-[var(--teal)]' : 'text-[var(--text)]',
+                      ].join(' ')}
+                    >
                       {STATUS_LABEL[step]}
                     </div>
                     {isCurrent && (
@@ -138,7 +164,14 @@ export default function TrackingPage() {
                     )}
                   </div>
                   {i < STATUS_STEPS.length - 1 && (
-                    <div className={`${styles.timelineLine} ${i < currentIdx ? styles.doneLine : ''}`} />
+                    <div
+                      className={[
+                        'absolute left-[13px] top-7 h-6 w-[2px]',
+                        i < currentIdx
+                          ? 'bg-[var(--teal)]'
+                          : 'bg-[var(--border)]',
+                      ].join(' ')}
+                    />
                   )}
                 </div>
               )
@@ -146,7 +179,7 @@ export default function TrackingPage() {
           </div>
 
           {/* Info */}
-          <div className={styles.infoGrid}>
+          <div className="mb-4 grid gap-3 text-[13px] sm:grid-cols-2">
             {[
               { label: 'Sản phẩm',   value: selected.product },
               { label: 'Tổng tiền',  value: selected.total },
@@ -154,21 +187,28 @@ export default function TrackingPage() {
               { label: 'Đơn vị VC',  value: selected.carrier },
               { label: 'Địa chỉ',    value: selected.address },
             ].map(({ label, value }) => (
-              <div key={label} className={styles.infoRow}>
-                <span className={styles.infoLabel}>{label}</span>
-                <span className={styles.infoValue}>{value}</span>
+              <div
+                key={label}
+                className="flex items-baseline justify-between gap-3 rounded-lg bg-[var(--surface2)] px-3 py-2"
+              >
+                <span className="text-[12px] font-medium text-[var(--muted)]">
+                  {label}
+                </span>
+                <span className="max-w-[60%] text-right text-[var(--text)]">
+                  {value}
+                </span>
               </div>
             ))}
           </div>
 
-          <div className={styles.detailActions}>
-            <button className="btn btn-outline" style={{ flex: 1 }}>
+          <div className="flex gap-3">
+            <button className="btn btn-outline flex-1">
               <IconTruck size={14} /> Cập nhật trạng thái
             </button>
           </div>
         </div>
       ) : (
-        <div className={styles.emptyPanel}>
+        <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface2)] px-6 py-10 text-center text-[13px] text-[var(--muted)]">
           <IconTruck size={32} color="var(--muted)" />
           <p>Chọn một đơn hàng để xem chi tiết tracking</p>
         </div>

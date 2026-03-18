@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconPlus } from '../../../shared/components/Icons'
 import type { Account, UserRole } from '../../../shared/types'
-import styles from './TablePage.module.css'
 
 const ACCOUNTS: Account[] = [
   { id: 'U001', name: 'Nguyễn Thị Mai',  email: 'mai.nguyen@gmail.com',  phone: '0901234567', role: 'member', joined: '15/01/2025', orders: 12, status: 'active' },
@@ -34,7 +33,7 @@ export default function AccountsPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 280 }}
@@ -80,9 +79,13 @@ export default function AccountsPage() {
                   <td>{a.orders}</td>
                   <td><span className={`status-badge ${a.status}`}>{a.status === 'active' ? 'Hoạt động' : 'Đã khóa'}</span></td>
                   <td>
-                    <span className={styles.link}>Xem</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Xem
+                    </span>
                     {' · '}
-                    <span className={styles.link}>{a.status === 'active' ? 'Khóa' : 'Mở khóa'}</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      {a.status === 'active' ? 'Khóa' : 'Mở khóa'}
+                    </span>
                   </td>
                 </tr>
               ))}

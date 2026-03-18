@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-const Register = () => {
+const CustomerRegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -228,7 +228,7 @@ const Register = () => {
         Quay lại trang chủ
       </Link>
     </div>
-  );
-};
+  )
+}
 
-export default Register;
+export default CustomerRegisterPage;

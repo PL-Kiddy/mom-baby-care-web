@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconDownload, IconPlus, IconWarning } from '../../../shared/components/Icons'
 import type { Product } from '../../../shared/types'
-import styles from './TablePage.module.css'
 
 const PRODUCTS: Product[] = [
   { id: 'SP001', name: 'Similac Gain IQ 4',    category: 'Sữa trẻ em',  price: '350,000 ₫', stock: 120, sold: 89, status: 'active' },
@@ -26,7 +25,7 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 280 }}
@@ -76,9 +75,13 @@ export default function ProductsPage() {
                   <td style={{ color: 'var(--muted)' }}>{p.sold}</td>
                   <td><span className={`status-badge ${p.status}`}>{p.status === 'active' ? 'Đang bán' : 'Ẩn'}</span></td>
                   <td>
-                    <span className={styles.link}>Sửa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Sửa
+                    </span>
                     {' · '}
-                    <span className={styles.link}>Xóa</span>
+                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                      Xóa
+                    </span>
                   </td>
                 </tr>
               ))}

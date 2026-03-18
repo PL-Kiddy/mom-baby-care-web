@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from '../../../shared/components/Topbar'
-import styles from './AdminLayout.module.css'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -16,11 +15,13 @@ const PAGE_TITLES: Record<string, string> = {
 export default function AdminLayout() {
   const { pathname } = useLocation()
   return (
-    <div className={styles.layout}>
+    <div className="min-h-screen flex bg-background-light text-text-main font-display">
       <Sidebar />
-      <div className={styles.main}>
+      <div className="flex-1 flex flex-col min-w-0 ml-[260px]">
         <Topbar title={PAGE_TITLES[pathname] ?? 'Admin'} />
-        <div className={styles.content}><Outlet /></div>
+        <div className="flex-1 px-6 py-7 md:px-10 lg:px-12 bg-background-light/60">
+          <Outlet />
+        </div>
       </div>
     </div>
   )

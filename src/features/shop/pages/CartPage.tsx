@@ -1,41 +1,34 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import Header from '../components/Header'
+import Footer from '../components/Footer'
+import { MOCK_SHOP_PRODUCTS } from '../data/mockShopData'
 
 interface CartItem {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  quantity: number;
-  image: string;
+  id: string
+  name: string
+  category: string
+  price: number
+  quantity: number
+  image: string
 }
 
-const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: 'Sữa non Alpha Lipid Lifeline 450g',
-      category: 'Sữa bột cho bé',
-      price: 1280000,
+const CartPage = () => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(
+    MOCK_SHOP_PRODUCTS.slice(0, 2).map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: Number(p.price.replace(/[^\d]/g, '')) || 0,
       quantity: 1,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCFhC6G5Ov2gEaewKcm80Tk8ggEsveikLA7jjdBZ9R14nhrvW3n0G6mmd120i8Z2pKcLYZ04XCmQOrl5Ec1LuM4D5Xp5xJs8Tuol1SPk9x-du2cCv6-vXLgXGQ6OTiP4GttpsrKBAB64vQgVuwZAPD_BFQZuy3CHB4Uh0lhMdObOYuzrTGvLIQigDDAlVPt0Qf5q4DparIpKFiTH5I7XDvhS9N4f5K1bQ6WdiWK0WUsVLO-kMkcrFROSNCcfJ11aRezBObWaEg3X6Xw',
-    },
-    {
-      id: 2,
-      name: 'Vitamin D3K2 LineaBon tăng chiều cao',
-      category: 'Vitamin & Thực phẩm chức năng',
-      price: 295000,
-      quantity: 1,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvj_n_L3sW5BuN5sE5iPdrQjDktES93xlJqLvwxcNe10jftXDKmR5qCaZME71uO0XQtp_6RyIttJrz6rddvw92pYOrXS1d4Ww6tAx9Yb1lffbDWEmziNSF_ouOPF2-NqgQqWCyJKlOIK3R2X5FHDz1hafcGgFq4Fxx7PhJQN1zPXo9MpiSoB2wZGleE8oB3t360yLe5Je8z68fkhI31AJ3OsqC7BGdOC3x90g-EAE6z-_WhtNZ9VqJ97L-Xr6DU-ii_0AduO5r2lGF',
-    },
-  ]);
+      image: p.image,
+    })),
+  );
 
   const [voucherCode, setVoucherCode] = useState('MOM20');
   const [isVoucherApplied, setIsVoucherApplied] = useState(true);
 
-  const updateQuantity = (id: number, change: number) => {
+  const updateQuantity = (id: string, change: number) => {
     setCartItems(
       cartItems.map((item) =>
         item.id === id
@@ -45,7 +38,7 @@ const Cart = () => {
     );
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
   };
 
@@ -66,32 +59,7 @@ const Cart = () => {
     return price.toLocaleString('vi-VN') + 'đ';
   };
 
-  const suggestedProducts = [
-    {
-      id: 1,
-      name: 'Sữa Meiji nội địa Nhật Bản số 0',
-      price: 550000,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCYu9wFI2w9Kr8qDGm1DHsJRMDRPIsQ0xnhEKdF43mgEX0DhRWa6r8OblY8KO5JM3dY4GqUN-hcrSwA7iooBJh3N_gxNU1jnfOmDVlgItSLXvK6BO_QbWMD4xfmYzOVIaig2lIUXew8pZP9hg1jHSm1cJWytbDtcFCSWHde5sKe_bd9cOf1azrW6x-JhYyekJ2IYhF9bINZn7AcM1_Eb_q23mcXP_z32ew8Ktgy60NA_soj84JdztCVH5BRWnEfZSh-R2SYAdYcgFAS',
-    },
-    {
-      id: 2,
-      name: 'Sữa Similac 5G số 4 900g (2-6 tuổi)',
-      price: 820000,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB-CVaLoDkC_e3pLGdBkner4LC1NJ7-KSvdOvTghfUPs4KzH9v7F4x7NysG_4kUZ0nZ5tiUZRF1VMjWu_6on_U9DoIBYB9yenpgw4rTFT0L34HGGAjUzJPf7Z7-T1pC94NVIwSSL5N3NYHHHn57vR-iq0AlmOuwojsAApCehC5f33cmhcFiPPxcEPNvaBf9wRjuI__TTMBAmq5Aw-gY7mAa6FaXqYIrGYLs9JkN5NU-aFkV-Y0p28tAEx-XrT_Cuh5eDKiScO8UavxX',
-    },
-    {
-      id: 3,
-      name: 'Sữa bột Ensure Gold ít ngọt 850g',
-      price: 745000,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAKR7K-cAnw5BSrGtm0lbmP0-kF9BwjxSPT8E1BYlX8ZvZRpgoOGsqv8-NANXDRplIEyu3fWyZtcZcISBlzrqe2MbfYYDOOe_f-1ifaa2hvYGaBFnUA2jC6wIjFKcoqy7ITF7zJyPheSqKmT6430UMGTADGpvyEA_q-LsZlEOpXqtxyb3RWww_uqbXHSihbWQN6J0tu-pPz9C3-QhiQHcxMPXbQJ_3cFhn0rjCrvIG6KYeUOzHwIunguM1MuHrb2isfiouXW5457aob',
-    },
-    {
-      id: 4,
-      name: 'Bột ăn dặm Heinz ngũ cốc vị sữa',
-      price: 125000,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbrQwpVzkCE0WQjCUgAG9NuRYJQIn7604jhnQLXHuIY57-DgZqzg59LSqy71v4n9avvMbxefP6IUvWbVEz5XdWrxLunZAYzdwWsXvsfU-nEic1D1LWvMt-ixHZgqULm7q4FjaCBTuIZBJh4oKnMrLS8bQeMJbgDXl8jev90FGGZjra20_SFv9DKDNOlmrHunUwfle3dJ4uv7O6Yznu-rcKIMDoc-JVG22KVjpcLSGFpoOilB2M2_jO_qkTC4NdO4mq0gNsJJxc_4B_',
-    },
-  ];
+  const suggestedProducts = MOCK_SHOP_PRODUCTS;
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 font-display min-h-screen flex flex-col overflow-x-hidden">
@@ -327,7 +295,7 @@ const Cart = () => {
 
       <Footer />
     </div>
-  );
-};
+  )
+}
 
-export default Cart;
+export default CartPage;

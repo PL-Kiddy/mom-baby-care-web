@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { IconCheckCircle, IconEye, IconWarning } from '../../../shared/components/Icons'
 import type { Order, OrderStatus } from '../../../shared/types'
-import styles from './StaffPage.module.css'
 
 const ORDERS: Order[] = [
   { id: '#ORD-0381', customer: 'Nguyễn Thị Mai',  phone: '0901234567', product: 'Similac Gain IQ 4',    total: '450,000 ₫',   status: 'pending',    time: '10/03/2025 08:12', payment: 'Chuyển khoản' },
@@ -51,22 +50,38 @@ export default function OrderConfirmPage() {
   return (
     <div>
       {/* Summary row */}
-      <div className={styles.summaryRow}>
+      <div className="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Chờ xác nhận', value: pendingCount,                                       color: 'gold' },
           { label: 'Đang xử lý',   value: orders.filter(o => o.status === 'processing').length, color: 'blue' },
           { label: 'Hoàn thành',   value: orders.filter(o => o.status === 'completed').length,  color: 'green' },
           { label: 'Đã hủy',       value: orders.filter(o => o.status === 'cancelled').length,  color: 'red' },
         ].map((s) => (
-          <div key={s.label} className={`card ${styles.summaryCard}`}>
-            <div className={`${styles.summaryValue} ${styles[s.color]}`}>{s.value}</div>
-            <div className={styles.summaryLabel}>{s.label}</div>
+          <div
+            key={s.label}
+            className="card flex flex-col gap-1.5 text-center"
+          >
+            <div
+              className={[
+                'text-2xl font-bold tracking-[-0.5px]',
+                s.color === 'red'
+                  ? 'text-[var(--red)]'
+                  : s.color === 'gold'
+                    ? 'text-[var(--gold)]'
+                    : s.color === 'green'
+                      ? 'text-[var(--teal)]'
+                      : 'text-[var(--accent)]',
+              ].join(' ')}
+            >
+              {s.value}
+            </div>
+            <div className="text-[12px] text-[var(--muted)]">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Toolbar */}
-      <div className={styles.toolbar}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="input"
           style={{ maxWidth: 300 }}
@@ -75,9 +90,14 @@ export default function OrderConfirmPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
         {pendingCount > 0 && (
-          <div className={styles.pendingAlert}>
+          <div
+            className="
+              flex items-center gap-2 rounded-lg border border-[rgba(234,179,8,0.4)]
+              bg-[rgba(234,179,8,0.08)] px-3 py-2 text-[12px] text-[var(--gold)]
+            "
+          >
             <IconWarning size={14} color="var(--gold)" />
-            Có <strong>{pendingCount}</strong> đơn đang chờ xác nhận
+            Có <strong className="font-semibold">{pendingCount}</strong> đơn đang chờ xác nhận
           </div>
         )}
       </div>
@@ -115,21 +135,36 @@ export default function OrderConfirmPage() {
                   <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.time}</td>
                   <td><span className={`status-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span></td>
                   <td>
-                    <div className={styles.actionGroup}>
-                      <button className={styles.iconBtn} title="Xem chi tiết">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        className="
+                          flex h-7 w-7 items-center justify-center rounded-md
+                          border border-[var(--border)] bg-[var(--surface2)]
+                          text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]
+                        "
+                        title="Xem chi tiết"
+                      >
                         <IconEye size={14} />
                       </button>
                       {o.status === 'pending' && (
                         <>
                           <button
-                            className={`${styles.iconBtn} ${styles.confirm}`}
+                            className="
+                              flex h-7 w-7 items-center justify-center rounded-md
+                              border border-[rgba(52,211,153,0.5)] bg-[rgba(52,211,153,0.12)]
+                              text-[var(--teal)] transition-colors hover:border-[var(--teal)]
+                            "
                             title="Xác nhận"
                             onClick={() => confirmOrder(o.id)}
                           >
                             <IconCheckCircle size={14} />
                           </button>
                           <button
-                            className={`${styles.iconBtn} ${styles.cancel}`}
+                            className="
+                              flex h-7 w-7 items-center justify-center rounded-md
+                              border border-[rgba(248,113,113,0.6)] bg-[rgba(248,113,113,0.12)]
+                              text-[var(--red)] transition-colors hover:border-[var(--red)]
+                            "
                             title="Hủy đơn"
                             onClick={() => cancelOrder(o.id)}
                           >

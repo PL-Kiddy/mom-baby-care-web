@@ -1,4 +1,5 @@
-import React from 'react';
+import React from 'react'
+import { Link } from 'react-router-dom'
 
 const HeroSection: React.FC = () => {
   return (
@@ -23,13 +24,19 @@ const HeroSection: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-              <button className="bg-primary hover:bg-primary-hover text-[#4a1d26] font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
+              <Link
+                to="/products"
+                className="bg-primary hover:bg-primary-hover text-[#4a1d26] font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+              >
                 <span>Mua ngay</span>
                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-              </button>
-              <button className="bg-white dark:bg-white/10 hover:bg-[#fff5f7] dark:hover:bg-white/20 text-text-main dark:text-white font-bold py-3 px-8 rounded-xl transition-all border border-[#fce7ef] dark:border-white/10">
-                Xem chi tiết
-              </button>
+              </Link>
+              <Link
+                to="/blog"
+                className="bg-white dark:bg-white/10 hover:bg-[#fff5f7] dark:hover:bg-white/20 text-text-main dark:text-white font-bold py-3 px-8 rounded-xl transition-all border border-[#fce7ef] dark:border-white/10"
+              >
+                Xem bài viết
+              </Link>
             </div>
 
             <div className="flex items-center gap-6 justify-center md:justify-start mt-2 text-sm text-text-muted dark:text-gray-400 font-medium">
