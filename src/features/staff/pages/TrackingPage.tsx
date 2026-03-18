@@ -93,7 +93,10 @@ export default function TrackingPage() {
                     <td><span className={`status-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span></td>
                     <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.updatedAt}</td>
                     <td>
-                      <button className={styles.iconBtn} onClick={() => setSelected(o)}>
+                      <button
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)] hover:border-[var(--teal)] hover:text-[var(--teal)]"
+                        onClick={() => setSelected(o)}
+                      >
                         <IconEye size={14} />
                       </button>
                     </td>

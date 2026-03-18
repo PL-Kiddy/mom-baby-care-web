@@ -1,54 +1,91 @@
 import type { LoginCredentials, AuthResponse, AuthUser } from '../../../shared/types'
+import { fetchJson, isMockEnabled } from '../../../shared/apiClient'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
+function mapAuthUserFromBackend(user: any): AuthUser {
+  const roleMap: Record<number | string, AuthUser['role']> = {
+    1: 'member',
+    2: 'staff',
+    3: 'admin',
+    member: 'member',
+    staff: 'staff',
+    admin: 'admin'
+  }
 
-function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+  const rawRole = user.role ?? 'member'
+  const role = roleMap[rawRole] ?? 'member'
+
+  return {
+    id: user.id ?? user._id ?? '',
+    name: user.name ?? '',
+    email: user.email ?? '',
+    avatar: user.avatar,
+    role
+  }
 }
 
 export async function loginApi(credentials: LoginCredentials): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(credentials),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error((err as { message?: string }).message ?? 'Đăng nhập thất bại')
+  if (isMockEnabled()) {
+    await new Promise((r) => setTimeout(r, 800))
+    const MOCK: Record<string, AuthResponse> = {
+      'admin@gmail.com': {
+        token: 'mock-admin-token-xyz',
+        user: { id: '1', name: 'Admin MilkCare', email: 'admin@gmail.com', role: 'admin' }
+      },
+      'staff@gmail.com': {
+        token: 'mock-staff-token-abc',
+        user: { id: '2', name: 'Nhân viên A', email: 'staff@gmail.com', role: 'staff' }
+      },
+      'member@gmail.com': {
+        token: 'mock-member-token-123',
+        user: { id: '3', name: 'Mẹ Demo', email: 'member@gmail.com', role: 'member' }
+      }
+    }
+    const match = MOCK[credentials.email]
+    if (!match || credentials.password !== '123456') throw new Error('Email hoặc mật khẩu không đúng')
+    return match
   }
-  return res.json() as Promise<AuthResponse>
+
+  const result = await fetchJson<{ token: string; user: any }>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials)
+  })
+
+  return {
+    token: result.token,
+    user: mapAuthUserFromBackend(result.user)
+  }
 }
 
 export async function getMeApi(token: string): Promise<AuthUser> {
-  const res = await fetch(`${BASE_URL}/auth/me`, { headers: authHeaders(token) })
-  if (!res.ok) throw new Error('Token không hợp lệ')
-  return res.json() as Promise<AuthUser>
+  if (isMockEnabled()) {
+    // Giả lập lấy thông tin từ token mock
+    if (token.startsWith('mock-admin')) {
+      return { id: '1', name: 'Admin MilkCare', email: 'admin@gmail.com', role: 'admin' }
+    }
+    if (token.startsWith('mock-staff')) {
+      return { id: '2', name: 'Nhân viên A', email: 'staff@gmail.com', role: 'staff' }
+    }
+    if (token.startsWith('mock-member')) {
+      return { id: '3', name: 'Mẹ Demo', email: 'member@gmail.com', role: 'member' }
+    }
+    throw new Error('Token không hợp lệ')
+  }
+
+  const user = await fetchJson<any>('/auth/me', { token })
+  return mapAuthUserFromBackend(user)
 }
 
-export async function logoutApi(token: string): Promise<void> {
-  await fetch(`${BASE_URL}/auth/logout`, {
-    method: 'POST', headers: authHeaders(token),
+export async function logoutApi(token: string, refreshToken?: string): Promise<void> {
+  if (isMockEnabled()) return
+
+  await fetchJson('/members/logout', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(
+      refreshToken
+        ? { refresh_token: refreshToken }
+        : {}
+    )
   }).catch(() => {})
 }
 
-// TODO: Xóa hàm này khi BE sẵn sàng
-export async function mockLogin(credentials: LoginCredentials): Promise<AuthResponse> {
-  await new Promise((r) => setTimeout(r, 800))
-  const MOCK: Record<string, AuthResponse> = {
-    'admin@gmail.com': {
-      token: 'mock-admin-token-xyz',
-      user: { id: '1', name: 'Admin MilkCare', email: 'admin@gmail.com', role: 'admin' },
-    },
-    'staff@gmail.com': {
-      token: 'mock-staff-token-abc',
-      user: { id: '2', name: 'Nhân viên A', email: 'staff@gmail.com', role: 'staff' },
-    },
-    'member@gmail.com': {
-      token: 'mock-member-token-123',
-      user: { id: '3', name: 'Mẹ Demo', email: 'member@gmail.com', role: 'member' },
-    },
-  }
-  const match = MOCK[credentials.email]
-  if (!match || credentials.password !== '123456') throw new Error('Email hoặc mật khẩu không đúng')
-  return match
-}

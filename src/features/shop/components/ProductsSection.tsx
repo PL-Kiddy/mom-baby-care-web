@@ -1,7 +1,17 @@
-import React from 'react'
-import { MOCK_SHOP_PRODUCTS } from '../data/mockShopData'
+import React, { useEffect, useState } from 'react'
+import { getHomeProducts, type ShopProductWithMedia } from '../services/productService'
 
 const ProductsSection: React.FC = () => {
+  const [products, setProducts] = useState<ShopProductWithMedia[]>([])
+
+  useEffect(() => {
+    getHomeProducts()
+      .then(setProducts)
+      .catch(() => {
+        setProducts([])
+      })
+  }, [])
+
   return (
     <section className="px-4 md:px-10 lg:px-40 py-8 bg-white dark:bg-[#25161a]">
       <div className="flex flex-col gap-8 py-4">
@@ -15,7 +25,7 @@ const ProductsSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_SHOP_PRODUCTS.map((product) => (
+          {products.map((product) => (
             <div
               key={product.id}
               className="group flex flex-col bg-background-light dark:bg-[#2d1b20] rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-transparent hover:border-primary/30"

@@ -55,8 +55,12 @@ const CartPage = () => {
   const discount = isVoucherApplied ? subtotal * 0.2 : 0;
   const total = subtotal - discount;
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('vi-VN') + 'đ';
+  const formatPrice = (price: number | string) => {
+    const numeric =
+      typeof price === 'number'
+        ? price
+        : Number(String(price).replace(/[^\d]/g, '')) || 0
+    return numeric.toLocaleString('vi-VN') + 'đ';
   };
 
   const suggestedProducts = MOCK_SHOP_PRODUCTS;

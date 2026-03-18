@@ -1,8 +1,16 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MOCK_BLOG_POSTS } from '../data/mockShopData'
+import { getHomePosts, type BlogCard } from '../services/postService'
 
 const BlogSection: React.FC = () => {
+  const [posts, setPosts] = useState<BlogCard[]>([])
+
+  useEffect(() => {
+    getHomePosts()
+      .then(setPosts)
+      .catch(() => setPosts([]))
+  }, [])
+
   return (
     <section className="px-4 md:px-10 lg:px-40 py-12">
       <div className="flex flex-col gap-8">
@@ -24,7 +32,7 @@ const BlogSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {MOCK_BLOG_POSTS.map((post) => (
+          {posts.map((post) => (
             <article key={post.id} className="flex flex-col gap-4 group cursor-pointer">
               <div className="rounded-2xl overflow-hidden aspect-video relative">
                 <img

@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-import { MOCK_SHOP_PRODUCTS } from '../data/mockShopData'
+import { getAllProducts, type ShopProductWithMedia } from '../services/productService'
 
 export default function ProductListPage() {
+  const [products, setProducts] = useState<ShopProductWithMedia[]>([])
+
+  useEffect(() => {
+    getAllProducts()
+      .then(setProducts)
+      .catch(() => setProducts([]))
+  }, [])
+
   return (
     <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col overflow-x-hidden">
       <Header />
@@ -37,7 +46,7 @@ export default function ProductListPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {MOCK_SHOP_PRODUCTS.map((p) => (
+          {products.map((p) => (
             <Link
               key={p.id}
               to={`/products/${p.id}`}

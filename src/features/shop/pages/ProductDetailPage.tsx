@@ -1,11 +1,33 @@
 import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-import { MOCK_SHOP_PRODUCTS } from '../data/mockShopData'
+import { getAllProducts, type ShopProductWithMedia } from '../services/productService'
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const product = MOCK_SHOP_PRODUCTS.find((p) => p.id === id) ?? MOCK_SHOP_PRODUCTS[0]
+  const [product, setProduct] = useState<ShopProductWithMedia | null>(null)
+
+  useEffect(() => {
+    getAllProducts()
+      .then((list) => {
+        const found = list.find((p) => p.id === id) ?? list[0]
+        setProduct(found ?? null)
+      })
+      .catch(() => setProduct(null))
+  }, [id])
+
+  if (!product) {
+    return (
+      <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col overflow-x-hidden">
+        <Header />
+        <main className="flex-grow w-full max-w-[1440px] mx-auto px-4 md:px-10 lg:px-40 py-8">
+          <p>Đang tải sản phẩm...</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col overflow-x-hidden">

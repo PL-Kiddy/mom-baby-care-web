@@ -139,9 +139,19 @@ export default function StaffVouchersPage() {
                   <td style={{ color: 'var(--muted)' }}>{v.expires}</td>
                   <td><span className={`status-badge ${v.status}`}>{v.status === 'active' ? 'Hoạt động' : 'Đã tắt'}</span></td>
                   <td>
-                    <span className={styles.link}>Sửa</span>
+                    <button
+                      className="text-[13px] font-medium text-[var(--accent)] hover:underline"
+                      type="button"
+                    >
+                      Sửa
+                    </button>
                     {' · '}
-                    <span className={styles.link}>{v.status === 'active' ? 'Tắt' : 'Bật'}</span>
+                    <button
+                      className="text-[13px] font-medium text-[var(--accent)] hover:underline"
+                      type="button"
+                    >
+                      {v.status === 'active' ? 'Tắt' : 'Bật'}
+                    </button>
                   </td>
                 </tr>
               ))}

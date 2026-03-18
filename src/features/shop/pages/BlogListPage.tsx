@@ -1,9 +1,17 @@
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-import { MOCK_BLOG_POSTS } from '../data/mockShopData'
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { getHomePosts, type BlogCard } from '../services/postService'
 
 export default function BlogListPage() {
+  const [posts, setPosts] = useState<BlogCard[]>([])
+
+  useEffect(() => {
+    getHomePosts()
+      .then(setPosts)
+      .catch(() => setPosts([]))
+  }, [])
   return (
     <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col overflow-x-hidden">
       <Header />
@@ -21,7 +29,7 @@ export default function BlogListPage() {
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {MOCK_BLOG_POSTS.map((post) => (
+          {posts.map((post) => (
             <Link
               key={post.id}
               to={`/blog/${post.id}`}
