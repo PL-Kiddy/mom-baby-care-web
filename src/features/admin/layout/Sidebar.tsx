@@ -8,18 +8,20 @@ import type { NavGroup } from '../../../shared/types'
 
 const NAV: NavGroup[] = [
   { section: 'Tổng quan', items: [
-    { to: '/dashboard', Icon: IconDashboard, label: 'Dashboard' },
+    { to: '/admin/dashboard', Icon: IconDashboard, label: 'Dashboard' },
   ]},
+
   { section: 'Quản lý', items: [
-    { to: '/products', Icon: IconProduct, label: 'Sản phẩm' },
-    { to: '/orders',   Icon: IconOrder,   label: 'Đơn hàng', badge: 14 },
-    { to: '/accounts', Icon: IconAccount, label: 'Tài khoản' },
-    { to: '/vouchers', Icon: IconVoucher, label: 'Voucher' },
-    { to: '/posts',    Icon: IconPost,    label: 'Bài viết' },
+    { to: '/admin/products', Icon: IconProduct, label: 'Sản phẩm' },
+    { to: '/admin/orders',   Icon: IconOrder,   label: 'Đơn hàng', badge: 14 },
+    { to: '/admin/accounts', Icon: IconAccount, label: 'Tài khoản' },
+    { to: '/admin/vouchers', Icon: IconVoucher, label: 'Voucher' },
+    { to: '/admin/posts',    Icon: IconPost,    label: 'Bài viết' },
   ]},
   { section: 'Báo cáo', items: [
-    { to: '/revenue', Icon: IconRevenue, label: 'Doanh thu' },
+    { to: '/admin/revenue', Icon: IconRevenue, label: 'Doanh thu' },
   ]},
+
 ]
 
 export default function Sidebar() {

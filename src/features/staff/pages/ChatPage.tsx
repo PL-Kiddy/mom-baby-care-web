@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconSend, IconMessageSquare } from '../../../shared/components/Icons'
+import { IconSend, IconMessageSquare, IconSearch, IconClock, IconRefresh } from '../../../shared/components/Icons'
 import type { ChatSession } from '../../../shared/types'
 
 const SESSIONS: ChatSession[] = [
@@ -44,6 +44,7 @@ export default function ChatPage() {
   const [selected, setSelected] = useState<ChatSession>(SESSIONS[0])
   const [messages, setMessages] = useState<Record<string, Message[]>>(INIT_MESSAGES)
   const [input, setInput] = useState('')
+  const [search, setSearch] = useState('')
 
   const currentMsgs = messages[selected.id] ?? []
 
@@ -66,191 +67,174 @@ export default function ChatPage() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
 
+  const filteredSessions = sessions.filter(s => 
+    s.customer.toLowerCase().includes(search.toLowerCase()) || 
+    s.topic.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
-    <div
-      className="
-        grid h-[calc(100vh-130px)] gap-4
-        grid-cols-[300px,minmax(0,1fr)]
-      "
-    >
+    <div className="flex gap-5 h-[calc(100vh-140px)]">
       {/* Session list */}
-      <div
-        className="
-          flex flex-col overflow-hidden
-          rounded-[var(--radius)] border border-[var(--border)]
-          bg-[var(--surface)]
-        "
-      >
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 pb-3 pt-4">
-          <span className="text-[14px] font-semibold">Hội thoại</span>
-          <span className="rounded-full bg-[var(--teal)] px-2 py-[2px] text-[10px] font-bold text-[#0b0e18]">
-            {sessions.filter(s => s.unread > 0).length} mới
-          </span>
+      <div className="w-[320px] flex flex-col card !p-0 overflow-hidden bg-[var(--surface-solid)]">
+        <div className="p-4 border-b border-[var(--border)]">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[15px] font-bold text-text-main">Hội thoại</h3>
+            <span className="bg-[rgba(255,143,163,0.1)] text-[var(--accent)] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[rgba(255,143,163,0.2)]">
+              {sessions.filter(s => s.unread > 0).length} Mới
+            </span>
+          </div>
+          <div className="search-wrapper" style={{ position: 'relative' }}>
+            <IconSearch 
+              className="search-icon" 
+              size={14} 
+              style={{ 
+                position: 'absolute', 
+                left: '12px', 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                color: 'var(--muted)',
+                pointerEvents: 'none'
+              }} 
+            />
+            <input 
+              className="input pl-9 h-9 text-[13px]" 
+              style={{ paddingLeft: '36px' }}
+              placeholder="Tìm khách hàng..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
         </div>
-        {sessions.map((s) => (
-          <div
-            key={s.id}
-            className={[
-              'flex cursor-pointer items-start gap-2.5 border-b border-[rgba(31,38,64,0.4)] px-3.5 py-3 transition-colors',
-              'hover:bg-[var(--surface2)]',
-              selected.id === s.id
-                ? 'border-l-2 border-l-[var(--teal)] bg-[rgba(52,211,153,0.06)]'
-                : '',
-            ].join(' ')}
-            onClick={() => setSelected(s)}
-          >
+        
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {filteredSessions.map((s) => (
             <div
-              className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
-              style={{
-                background: s.status === 'waiting'
-                ? 'linear-gradient(135deg, var(--gold), #f59e0b)'
-                : s.status === 'active'
-                  ? 'linear-gradient(135deg, var(--teal), var(--accent))'
-                  : 'var(--surface2)',
-                color:
-                  s.status === 'closed'
-                    ? 'var(--muted)'
-                    : '#0b0e18',
-              }}
+              key={s.id}
+              className={`flex items-start gap-3 p-4 border-b border-[var(--border)] cursor-pointer transition-all hover:bg-[var(--surface2)] ${
+                selected.id === s.id ? 'bg-[rgba(255,143,163,0.05)] border-l-4 border-l-[var(--accent)]' : ''
+              }`}
+              onClick={() => setSelected(s)}
             >
-              {s.avatar}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-semibold">
-                {s.customer}
-              </div>
-              <div className="mt-[2px] truncate text-[11px] text-[var(--muted)]">
-                {s.lastMessage}
-              </div>
-            </div>
-            <div className="flex flex-shrink-0 flex-col items-end gap-1">
-              <div className="text-[10px] text-[var(--muted)]">
-                {s.time}
-              </div>
-              {s.unread > 0 && (
-                <div className="rounded-[10px] bg-[var(--teal)] px-1.5 py-[1px] text-[9px] font-bold text-[#0b0e18]">
-                  {s.unread}
+              <div className="relative">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm"
+                  style={{ 
+                    background: s.status === 'waiting' 
+                      ? 'linear-gradient(135deg, #f59e0b, #fbbf24)' 
+                      : s.status === 'active' 
+                        ? 'linear-gradient(135deg, var(--accent), var(--accent2))' 
+                        : 'var(--muted)' 
+                  }}
+                >
+                  {s.avatar}
                 </div>
-              )}
-              <span className={`status-badge ${s.status === 'waiting' ? 'pending' : s.status === 'active' ? 'processing' : 'inactive'}`} style={{ fontSize: 9, padding: '2px 6px' }}>
-                {s.status === 'waiting' ? 'Chờ' : s.status === 'active' ? 'Đang' : 'Đóng'}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Chat window */}
-      <div
-        className="
-          flex flex-col overflow-hidden
-          rounded-[var(--radius)] border border-[var(--border)]
-          bg-[var(--surface)]
-        "
-      >
-        {/* Chat header */}
-        <div className="flex flex-shrink-0 items-center gap-3 border-b border-[var(--border)] px-4 py-3.5">
-          <div
-            className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
-            style={{ background: 'linear-gradient(135deg, var(--teal), var(--accent))', color: '#0b0e18' }}
-          >
-            {selected.avatar}
-          </div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{selected.customer}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{selected.topic}</div>
-          </div>
-          <span className={`status-badge ${selected.status === 'waiting' ? 'pending' : selected.status === 'active' ? 'processing' : 'inactive'}`} style={{ marginLeft: 'auto' }}>
-            {selected.status === 'waiting' ? 'Đang chờ' : selected.status === 'active' ? 'Đang hoạt động' : 'Đã đóng'}
-          </span>
-        </div>
-
-        {/* Messages */}
-        <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-4">
-          {currentMsgs.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-[13px] text-[var(--muted)] opacity-60">
-              <IconMessageSquare size={28} color="var(--muted)" />
-              <p>Chưa có tin nhắn nào</p>
-            </div>
-          )}
-          {currentMsgs.map((msg) => (
-            <div
-              key={msg.id}
-              className={[
-                'flex max-w-[65%] flex-col',
-                msg.sender === 'staff' ? 'self-end' : 'self-start',
-              ].join(' ')}
-            >
-              <div
-                className={[
-                  'rounded-[14px] px-3.5 py-2.5 text-[13px] leading-relaxed',
-                  msg.sender === 'staff'
-                    ? 'border border-[rgba(52,211,153,0.2)] bg-[rgba(52,211,153,0.15)]'
-                    : 'border border-[var(--border)] bg-[var(--surface2)]',
-                  msg.sender === 'staff'
-                    ? 'rounded-br-[4px]'
-                    : 'rounded-bl-[4px]',
-                ].join(' ')}
-              >
-                {msg.text}
+                {s.status === 'active' && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[var(--accent)] border-2 border-[var(--surface)] shadow-sm" />
+                )}
               </div>
-              <div
-                className={[
-                  'mt-1 px-1 text-[10px] text-[var(--muted)]',
-                  msg.sender === 'staff' ? 'text-right' : 'text-left',
-                ].join(' ')}
-              >
-                {msg.time}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-0.5">
+                  <span className="text-[13px] font-bold text-text-main truncate">{s.customer}</span>
+                  <span className="text-[10px] text-[var(--muted)]">{s.time}</span>
+                </div>
+                <div className="text-[11px] text-[var(--muted)] truncate mb-1">{s.lastMessage}</div>
+                <div className="flex items-center gap-2">
+                   <span className={`status-badge !px-1.5 !py-0 !text-[9px] ${s.status === 'waiting' ? 'pending' : s.status === 'active' ? 'processing' : 'member'}`}>
+                     {s.status === 'waiting' ? 'Đang chờ' : s.status === 'active' ? 'Hoạt động' : 'Đã đóng'}
+                   </span>
+                   {s.unread > 0 && (
+                     <span className="bg-[var(--red)] text-white text-[9px] font-bold px-1.5 rounded-full">{s.unread}</span>
+                   )}
+                </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Chat window */}
+      <div className="flex-1 flex flex-col card !p-0 overflow-hidden bg-[var(--surface-solid)] relative">
+        {/* Chat header */}
+        <div className="flex items-center gap-3 p-4 border-b border-[var(--border)] bg-white/50 backdrop-blur-md sticky top-0 z-10">
+          <div 
+            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm"
+            style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent2))' }}
+          >
+            {selected.avatar}
+          </div>
+          <div className="flex-1">
+            <h3 className="text-[14px] font-bold text-text-main">{selected.customer}</h3>
+            <div className="flex items-center gap-2 text-[11px] text-[var(--muted)]">
+               <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" /> Đang hoạt động</span>
+               <span>•</span>
+               <span>Chủ đề: {selected.topic}</span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn btn-secondary !p-2 rounded-lg" title="Làm mới">
+               <IconRefresh size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[rgba(var(--accent-rgb),0.01)]">
+          {currentMsgs.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-[var(--muted)] opacity-50">
+               <IconMessageSquare size={48} className="mb-3" />
+               <p className="text-[13px]">Bắt đầu cuộc trò chuyện với {selected.customer}</p>
+            </div>
+          ) : (
+            currentMsgs.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.sender === 'staff' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[70%] ${msg.sender === 'staff' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                   <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm ${
+                     msg.sender === 'staff' 
+                       ? 'bg-[var(--accent)] text-white rounded-tr-none' 
+                       : 'bg-[var(--surface2)] text-text-main border border-[var(--border)] rounded-tl-none'
+                   }`}>
+                     {msg.text}
+                   </div>
+                   <div className="text-[10px] text-[var(--muted)] flex items-center gap-1 px-1">
+                     <IconClock size={10} /> {msg.time}
+                   </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
         {/* Quick replies */}
-        <div className="flex flex-shrink-0 gap-1.5 overflow-x-auto border-t border-[var(--border)] px-3.5 py-2.5">
+        <div className="p-3 border-t border-[var(--border)] flex gap-2 overflow-x-auto no-scrollbar bg-[var(--surface2)]/30">
           {QUICK_REPLIES.map((q) => (
             <button
               key={q}
-              className="
-                whitespace-nowrap rounded-[20px] border border-[var(--border)]
-                bg-[var(--surface2)] px-3 py-1 text-[11px] font-medium
-                text-[var(--muted)] transition-colors hover:border-[var(--teal)] hover:text-[var(--teal)]
-              "
+              className="whitespace-nowrap px-3 py-1.5 rounded-full border border-[var(--border)] bg-white text-[11px] font-medium text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all shadow-sm"
               onClick={() => setInput(q)}
             >
-              {q.length > 40 ? q.slice(0, 40) + '...' : q}
+              {q}
             </button>
           ))}
         </div>
 
         {/* Input */}
-        <div className="flex flex-shrink-0 items-end gap-2.5 border-t border-[var(--border)] px-3.5 py-3">
-          <textarea
-            className="
-              min-h-[42px] flex-1 resize-none rounded-[10px]
-              border border-[var(--border)] bg-[var(--surface2)]
-              px-3.5 py-2.5 text-[13px] text-[var(--text)]
-              outline-none transition-colors
-              focus:border-[var(--teal)]
-            "
-            placeholder="Nhập tin nhắn... (Enter để gửi)"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            rows={2}
-          />
+        <div className="p-4 border-t border-[var(--border)] flex gap-3 items-end">
+          <div className="flex-1 relative">
+            <textarea
+              className="input w-full min-h-[44px] max-h-[120px] py-2.5 pl-4 pr-4 resize-none text-[13px]"
+              placeholder="Nhập tin nhắn..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              rows={1}
+            />
+          </div>
           <button
-            className="
-              flex h-10 w-10 flex-shrink-0 items-center justify-center
-              rounded-[10px] border-0 bg-[var(--teal)]
-              text-[#0b0e18] transition-all
-              enabled:hover:bg-[#5ee7be]
-              disabled:cursor-not-allowed disabled:opacity-40
-            "
+            className="w-11 h-11 rounded-xl bg-[var(--accent)] text-white flex items-center justify-center shadow-lg shadow-[rgba(255,143,163,0.2)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
             onClick={send}
             disabled={!input.trim()}
           >
-            <IconSend size={16} />
+            <IconSend size={20} />
           </button>
         </div>
       </div>

@@ -1,218 +1,247 @@
-import { useState } from 'react'
-import { IconTruck, IconRefresh, IconEye } from '../../../shared/components/Icons'
-import type { TrackingOrder, TrackingStatus } from '../../../shared/types'
+import { useState, useEffect } from 'react'
+import { IconTruck, IconRefresh, IconEye, IconSearch, IconClock, IconPhone, IconUser, IconMapPin } from '../../../shared/components/Icons'
+import { useAuth } from '../../../shared/hooks/useAuth'
+import { getStaffOrdersApi } from '../services/staffService'
 
-const ORDERS: TrackingOrder[] = [
-  { id: '#ORD-0380', customer: 'Trần Hoa Linh',   phone: '0912345678', product: 'Nan Optipro 1',       total: '780,000 ₫',   address: '123 Nguyễn Huệ, Q.1, TP.HCM',     trackingCode: 'GHTK-AB12345', carrier: 'GHTK',      status: 'shipping',   updatedAt: '10/03 10:30' },
-  { id: '#ORD-0376', customer: 'Hoàng Thị Lan',   phone: '0956789012', product: 'Frisolac Gold',       total: '890,000 ₫',   address: '456 Lê Lợi, Q.3, TP.HCM',         trackingCode: 'GHTK-CD67890', carrier: 'GHTK',      status: 'packing',    updatedAt: '10/03 09:15' },
-  { id: '#ORD-0375', customer: 'Bùi Thị Hoa',     phone: '0967890123', product: 'Similac Gain IQ',     total: '350,000 ₫',   address: '789 Trần Hưng Đạo, Q.5, TP.HCM',  trackingCode: 'VNP-EF11111',  carrier: 'VNPost',    status: 'delivered',  updatedAt: '09/03 16:45' },
-  { id: '#ORD-0374', customer: 'Đỗ Minh Tú',      phone: '0978901234', product: 'Aptamil Gold+ 1',     total: '460,000 ₫',   address: '321 Đinh Tiên Hoàng, Bình Thạnh', trackingCode: 'JTE-GH22222',  carrier: 'J&T Express', status: 'confirmed',  updatedAt: '10/03 08:00' },
-  { id: '#ORD-0373', customer: 'Ngô Thị Phương',  phone: '0989012345', product: 'Enfamama A+',         total: '280,000 ₫',   address: '654 Phan Văn Trị, Gò Vấp',        trackingCode: 'JTE-IJ33333',  carrier: 'J&T Express', status: 'returned',   updatedAt: '08/03 14:20' },
-]
-
-const STATUS_LABEL: Record<TrackingStatus, string> = {
-  confirmed: 'Đã xác nhận',
-  packing:   'Đang đóng gói',
-  shipping:  'Đang giao',
-  delivered: 'Đã giao',
-  returned:  'Hoàn hàng',
+const STATUS_LABEL: Record<string, string> = {
+  'confirmed': 'Đã xác nhận',
+  'processing': 'Đang xử lý',
+  'shipping': 'Đang giao hàng',
+  'shipped': 'Đã giao hàng',
+  'delivered': 'Đã hoàn thành',
+  'cancelled': 'Đã hủy',
+  'returned': 'Hoàn hàng',
 }
 
-const STATUS_STEPS: TrackingStatus[] = ['confirmed', 'packing', 'shipping', 'delivered']
-
-const TABS = ['Tất cả', 'Đang đóng gói', 'Đang giao', 'Đã giao', 'Hoàn hàng'] as const
+const STATUS_STEPS = ['confirmed', 'processing', 'shipping', 'delivered']
 
 export default function TrackingPage() {
+  const { token } = useAuth()
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<TrackingOrder | null>(null)
+  const [selected, setSelected] = useState<any | null>(null)
 
-  const filtered = ORDERS.filter((o) => {
+  const loadOrders = async () => {
+    if (!token) return
+    setLoading(true)
+    try {
+      const data = await getStaffOrdersApi(token)
+      setOrders(data || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadOrders() }, [token])
+
+  const filtered = orders.filter((o) => {
     const matchTab =
       tab === 0 ||
-      (tab === 1 && o.status === 'packing') ||
+      (tab === 1 && o.status === 'processing') ||
       (tab === 2 && o.status === 'shipping') ||
-      (tab === 3 && o.status === 'delivered') ||
+      (tab === 3 && (o.status === 'shipped' || o.status === 'delivered')) ||
       (tab === 4 && o.status === 'returned')
     const matchSearch =
-      o.customer.toLowerCase().includes(search.toLowerCase()) ||
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.trackingCode.toLowerCase().includes(search.toLowerCase())
+      o.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
+      o._id.toLowerCase().includes(search.toLowerCase()) ||
+      o.tracking_number?.toLowerCase().includes(search.toLowerCase())
     return matchTab && matchSearch
   })
 
+  const TABS = ['Tất cả', 'Đang xử lý', 'Đang giao', 'Đã giao', 'Hoàn hàng'] as const
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr),minmax(0,1.3fr)]">
-      {/* Left - table */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          <input
-            className="input"
-            style={{ maxWidth: 300 }}
-            placeholder="Tìm mã đơn, mã tracking..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button className="btn btn-outline" style={{ marginLeft: 'auto' }}>
-            <IconRefresh size={14} /> Cập nhật
-          </button>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr),400px]">
+      <div className="min-w-0">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="search-wrapper flex-1" style={{ position: 'relative' }}>
+              <IconSearch 
+                className="search-icon" 
+                size={16} 
+                style={{ 
+                  position: 'absolute', 
+                  left: '12px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
+                  color: 'var(--muted)',
+                  pointerEvents: 'none'
+                }} 
+              />
+              <input
+                className="input h-10 pl-10"
+                style={{ paddingLeft: '40px' }}
+                placeholder="Tìm mã đơn, tên khách hàng..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="btn btn-secondary h-10 w-10 !p-0" onClick={loadOrders} title="Làm mới">
+              <IconRefresh size={18} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
 
-        <div className="card">
-          <div className="tab-row">
+        <div className="card !p-0 overflow-hidden">
+          <div className="tab-row h-12 !mb-0 px-4 border-b border-[var(--border)]">
             {TABS.map((t, i) => (
-              <button key={t} className={`tab ${tab === i ? 'active' : ''}`} onClick={() => setTab(i)}>{t}</button>
+              <button key={t} className={`tab !py-2 ${tab === i ? 'active' : ''}`} onClick={() => setTab(i)}>{t}</button>
             ))}
           </div>
           <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Mã đơn</th>
-                  <th>Khách hàng</th>
-                  <th>Sản phẩm</th>
-                  <th>Mã vận đơn</th>
-                  <th>Đơn vị</th>
-                  <th>Trạng thái</th>
-                  <th>Cập nhật</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((o) => (
-                  <tr
-                    key={o.id}
-                    style={{ cursor: 'pointer', background: selected?.id === o.id ? 'rgba(52,211,153,.04)' : '' }}
-                    onClick={() => setSelected(o)}
-                  >
-                    <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{o.id}</td>
-                    <td style={{ fontWeight: 500 }}>{o.customer}</td>
-                    <td style={{ color: 'var(--muted)' }}>{o.product}</td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--teal)' }}>{o.trackingCode}</td>
-                    <td style={{ color: 'var(--muted)' }}>{o.carrier}</td>
-                    <td><span className={`status-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span></td>
-                    <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.updatedAt}</td>
-                    <td>
-                      <button className={styles.iconBtn} onClick={() => setSelected(o)}>
-                        <IconEye size={14} />
-                      </button>
-                    </td>
+            {loading ? (
+              <div className="p-20 text-center text-[var(--muted)] animate-pulse flex flex-col items-center gap-3">
+                <IconRefresh size={24} className="animate-spin" />
+                Đang tải dữ liệu vận chuyển...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="p-20 text-center text-[var(--muted)]">Không tìm thấy vận đơn nào</div>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Vận đơn</th>
+                    <th>Trạng thái</th>
+                    <th>Cập nhật</th>
+                    <th className="text-right">Chi tiết</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((o) => (
+                    <tr
+                      key={o._id}
+                      className={selected?._id === o._id ? 'bg-[rgba(255,143,163,0.05)]' : 'cursor-pointer hover:bg-[var(--surface2)]'}
+                      onClick={() => setSelected(o)}
+                    >
+                      <td><span className="font-bold text-[var(--accent)] text-[13px]">{o._id.slice(-8).toUpperCase()}</span></td>
+                      <td>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-text-main">{o.customer_name}</span>
+                          <span className="text-[11px] text-[var(--muted)]">{o.phone}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex flex-col">
+                          <span className="font-mono text-[12px] text-[var(--accent)] font-bold">{o.tracking_number || 'Chưa có'}</span>
+                          <span className="text-[11px] text-[var(--muted)]">{o.shipping_method || 'Nhanh'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${
+                          o.status === 'shipping' ? 'pending' : 
+                          (o.status === 'shipped' || o.status === 'delivered') ? 'completed' : 
+                          o.status === 'cancelled' ? 'cancelled' : 'member'
+                        }`}>
+                          {STATUS_LABEL[o.status] || o.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
+                          <IconClock size={12} /> {new Date(o.updated_at).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="text-right">
+                        <button className="btn-icon p-2 hover:bg-[var(--surface2)] text-[var(--muted)] hover:text-[var(--accent)]">
+                          <IconEye size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Right - detail panel */}
-          {selected ? (
-        <div className="card h-full border border-[var(--border)] bg-[var(--surface)]">
-          <div className="mb-4 flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
-            <div>
-              <div className="text-[15px] font-semibold text-[var(--accent)]">
-                {selected.id}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{selected.customer} · {selected.phone}</div>
-            </div>
-            <button
-              className="
-                flex h-7 w-7 items-center justify-center rounded-md
-                border border-[var(--border)] text-[var(--muted)]
-                transition-colors hover:border-[var(--red)] hover:text-[var(--red)]
-              "
-              onClick={() => setSelected(null)}
-            >
-              ✕
-            </button>
-          </div>
+      <div className="flex flex-col gap-4">
+        {selected ? (
+          <div className="card h-fit sticky top-4">
+             <div className="flex items-center justify-between mb-5">
+               <h3 className="text-[16px] font-bold text-text-main flex items-center gap-2">
+                 <IconTruck size={20} className="text-[var(--accent)]" /> Chi tiết vận chuyển
+               </h3>
+               <button onClick={() => setSelected(null)} className="text-[var(--muted)] hover:text-[var(--red)]">✕</button>
+             </div>
 
-          {/* Timeline */}
-          <div className="mb-5 space-y-3">
-            {STATUS_STEPS.map((step, i) => {
-              const steps = STATUS_STEPS
-              const currentIdx = steps.indexOf(selected.status as TrackingStatus)
-              const isDone = i <= currentIdx
-              const isCurrent = i === currentIdx
-              return (
-                <div
-                  key={step}
-                  className="relative flex items-center gap-3"
-                >
-                  <div
-                    className={[
-                      'flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold',
-                      isDone
-                        ? 'border-[var(--teal)] bg-[rgba(52,211,153,0.15)] text-[var(--teal)]'
-                        : 'border-[var(--border)] bg-[var(--surface2)] text-[var(--muted)]',
-                      isCurrent ? 'ring-2 ring-[rgba(52,211,153,0.35)]' : '',
-                    ].join(' ')}
-                  >
-                    {isDone && !isCurrent && <span style={{ fontSize: 10 }}>✓</span>}
-                  </div>
+             <div className="mb-6 p-4 rounded-xl bg-[var(--surface2)] border border-[var(--border)]">
+                <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div
-                      className={[
-                        'text-[13px] font-medium',
-                        isCurrent ? 'text-[var(--teal)]' : 'text-[var(--text)]',
-                      ].join(' ')}
-                    >
-                      {STATUS_LABEL[step]}
+                    <div className="text-[14px] font-bold text-[var(--accent)] mb-1">Đơn hàng {selected._id.slice(-8).toUpperCase()}</div>
+                    <div className="text-[12px] text-[var(--muted)] flex items-center gap-2">
+                      <IconUser size={12} /> {selected.customer_name}
                     </div>
-                    {isCurrent && (
-                      <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{selected.updatedAt}</div>
-                    )}
                   </div>
-                  {i < STATUS_STEPS.length - 1 && (
-                    <div
-                      className={[
-                        'absolute left-[13px] top-7 h-6 w-[2px]',
-                        i < currentIdx
-                          ? 'bg-[var(--teal)]'
-                          : 'bg-[var(--border)]',
-                      ].join(' ')}
-                    />
-                  )}
+                  <span className={`status-badge ${selected.status === 'shipping' ? 'pending' : (selected.status === 'shipped' || selected.status === 'delivered') ? 'completed' : 'member'}`}>
+                    {STATUS_LABEL[selected.status]}
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+                <div className="flex items-center gap-2 text-[12px] text-[var(--muted)]">
+                   <IconPhone size={12} /> {selected.phone}
+                </div>
+             </div>
 
-          {/* Info */}
-          <div className="mb-4 grid gap-3 text-[13px] sm:grid-cols-2">
-            {[
-              { label: 'Sản phẩm',   value: selected.product },
-              { label: 'Tổng tiền',  value: selected.total },
-              { label: 'Mã vận đơn', value: selected.trackingCode },
-              { label: 'Đơn vị VC',  value: selected.carrier },
-              { label: 'Địa chỉ',    value: selected.address },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                className="flex items-baseline justify-between gap-3 rounded-lg bg-[var(--surface2)] px-3 py-2"
-              >
-                <span className="text-[12px] font-medium text-[var(--muted)]">
-                  {label}
-                </span>
-                <span className="max-w-[60%] text-right text-[var(--text)]">
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
+             <div className="space-y-6 mb-8 relative px-2">
+                <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-[var(--border)]" />
+                {STATUS_STEPS.map((step, i) => {
+                  const currentIdx = STATUS_STEPS.indexOf(selected.status === 'shipped' ? 'delivered' : selected.status)
+                  const isDone = i <= currentIdx
+                  const isCurrent = i === currentIdx
+                  return (
+                    <div key={step} className="flex gap-4 relative z-10">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 ${
+                        isDone ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'bg-[var(--surface2)] border-[var(--border)] text-[var(--muted)]'
+                      }`}>
+                        {isDone ? '✓' : i + 1}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className={`text-[13px] font-bold ${isDone ? 'text-text-main' : 'text-[var(--muted)]'}`}>
+                          {STATUS_LABEL[step]}
+                        </span>
+                        {isCurrent && (
+                          <span className="text-[11px] text-[var(--accent)] font-medium">Đã cập nhật lúc {new Date(selected.updated_at).toLocaleTimeString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+             </div>
 
-          <div className="flex gap-3">
-            <button className="btn btn-outline flex-1">
-              <IconTruck size={14} /> Cập nhật trạng thái
-            </button>
+             <div className="space-y-3">
+               <div className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--surface2)]">
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-[var(--muted)]">Địa chỉ nhận hàng</span>
+                  <div className="flex gap-2 text-[12px] text-text-main">
+                    <IconMapPin size={14} className="mt-0.5 text-[var(--accent)] shrink-0" />
+                    <span>{selected.address}</span>
+                  </div>
+               </div>
+               <div className="grid grid-cols-2 gap-3">
+                 <div className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--surface2)]">
+                    <span className="text-[11px] uppercase tracking-wider font-bold text-[var(--muted)]">Vận đơn</span>
+                    <span className="text-[12px] font-mono font-bold text-[var(--accent)]">{selected.tracking_number || 'N/A'}</span>
+                 </div>
+                 <div className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--surface2)]">
+                    <span className="text-[11px] uppercase tracking-wider font-bold text-[var(--muted)]">Hình thức</span>
+                    <span className="text-[12px] font-bold text-text-main">{selected.shipping_method || 'Giao tiết kiệm'}</span>
+                 </div>
+               </div>
+             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface2)] px-6 py-10 text-center text-[13px] text-[var(--muted)]">
-          <IconTruck size={32} color="var(--muted)" />
-          <p>Chọn một đơn hàng để xem chi tiết tracking</p>
-        </div>
-      )}
+        ) : (
+          <div className="card h-[400px] flex flex-col items-center justify-center text-center opacity-60">
+            <div className="w-16 h-16 rounded-full bg-[var(--surface2)] flex items-center justify-center mb-4">
+              <IconTruck size={32} className="text-[var(--muted)]" />
+            </div>
+            <p className="text-[13px] text-[var(--muted)] max-w-[200px]">Chọn một vận đơn trong danh sách để xem chi tiết</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

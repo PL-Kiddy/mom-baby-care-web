@@ -1,15 +1,8 @@
-import { useState } from 'react'
-import { IconCheckCircle, IconEye, IconWarning } from '../../../shared/components/Icons'
+import { useEffect, useState } from 'react'
+import { IconCheckCircle, IconEye, IconWarning, IconSearch, IconRefresh, IconUser, IconPhone, IconClock, IconTag, IconCreditCard } from '../../../shared/components/Icons'
+import { useAuth } from '../../../shared/hooks/useAuth'
+import { getStaffOrdersApi, updateOrderStatusApi } from '../services/staffService'
 import type { Order, OrderStatus } from '../../../shared/types'
-
-const ORDERS: Order[] = [
-  { id: '#ORD-0381', customer: 'Nguyễn Thị Mai',  phone: '0901234567', product: 'Similac Gain IQ 4',    total: '450,000 ₫',   status: 'pending',    time: '10/03/2025 08:12', payment: 'Chuyển khoản' },
-  { id: '#ORD-0382', customer: 'Lê Bích Ngọc',    phone: '0911222333', product: 'Enfamama A+ Vanilla',  total: '560,000 ₫',   status: 'pending',    time: '10/03/2025 09:05', payment: 'Ví MoMo' },
-  { id: '#ORD-0383', customer: 'Trần Thu Hà',     phone: '0922333444', product: 'Aptamil Gold+ 2',      total: '840,000 ₫',   status: 'pending',    time: '10/03/2025 09:44', payment: 'COD' },
-  { id: '#ORD-0380', customer: 'Trần Hoa Linh',   phone: '0912345678', product: 'Nan Optipro 1',        total: '780,000 ₫',   status: 'processing', time: '09/03/2025 14:30', payment: 'Ví MoMo' },
-  { id: '#ORD-0379', customer: 'Lê Thanh Nga',    phone: '0923456789', product: 'Aptamil Gold',         total: '1,200,000 ₫', status: 'completed',  time: '08/03/2025 11:00', payment: 'COD' },
-  { id: '#ORD-0378', customer: 'Phạm Minh Anh',   phone: '0934567890', product: 'Dumex Mamil',          total: '320,000 ₫',   status: 'cancelled',  time: '08/03/2025 10:20', payment: 'Chuyển khoản' },
-]
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending:    'Chờ xác nhận',
@@ -21,11 +14,62 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 const TABS = ['Tất cả', 'Chờ xác nhận', 'Đang xử lý', 'Hoàn thành', 'Đã hủy'] as const
 
 export default function OrderConfirmPage() {
+  const { token } = useAuth()
   const [tab, setTab] = useState(0)
   const [search, setSearch] = useState('')
-  const [orders, setOrders] = useState<Order[]>(ORDERS)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const loadOrders = async () => {
+    if (!token) return
+    setLoading(true)
+    try {
+      const data = await getStaffOrdersApi(token)
+      const mapped: Order[] = data.map((item: any) => ({
+        id: `#${item._id.substring(item._id.length - 6).toUpperCase()}`,
+        _realId: item._id, // Lưu lại ID thực để dùng cho API update
+        customer: item.user?.name || 'Khách vãng lai',
+        phone: item.user?.phone_number || '-',
+        product: item.items?.[0]?.product?.name || 'Nhiều sản phẩm',
+        payment: item.payment_method || 'Chưa rõ',
+        total: `${item.total_amount?.toLocaleString()} ₫`,
+        status: (item.status?.toLowerCase() === 'delivering' ? 'processing' : item.status?.toLowerCase()) as OrderStatus,
+        time: new Date(item.createdAt).toLocaleString('vi-VN'),
+      }))
+      setOrders(mapped)
+    } catch (err) {
+      console.error('Failed to load staff orders:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadOrders()
+  }, [token])
 
   const pendingCount = orders.filter((o) => o.status === 'pending').length
+
+  const confirmOrder = async (id: string, realId: string) => {
+    if (!token) return
+    try {
+      await updateOrderStatusApi(token, realId, 'Delivering')
+      loadOrders() // Tải lại danh sách sau khi update
+    } catch (err) {
+      alert('Không thể xác nhận đơn hàng')
+    }
+  }
+
+  const cancelOrder = async (id: string, realId: string) => {
+    if (!token) return
+    try {
+      await updateOrderStatusApi(token, realId, 'Cancelled')
+      loadOrders()
+    } catch (err) {
+      alert('Không thể hủy đơn hàng')
+    }
+  }
+
 
   const filtered = orders.filter((o) => {
     const matchTab = tab === 0 || STATUS_LABEL[o.status] === TABS[tab]
@@ -35,151 +79,164 @@ export default function OrderConfirmPage() {
     return matchTab && matchSearch
   })
 
-  const confirmOrder = (id: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: 'processing' as OrderStatus } : o))
-    )
-  }
-
-  const cancelOrder = (id: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: 'cancelled' as OrderStatus } : o))
-    )
-  }
-
   return (
     <div>
       {/* Summary row */}
-      <div className="mb-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid gap-4 md:grid-cols-4">
         {[
           { label: 'Chờ xác nhận', value: pendingCount,                                       color: 'gold' },
           { label: 'Đang xử lý',   value: orders.filter(o => o.status === 'processing').length, color: 'blue' },
           { label: 'Hoàn thành',   value: orders.filter(o => o.status === 'completed').length,  color: 'green' },
           { label: 'Đã hủy',       value: orders.filter(o => o.status === 'cancelled').length,  color: 'red' },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="card flex flex-col gap-1.5 text-center"
-          >
-            <div
-              className={[
-                'text-2xl font-bold tracking-[-0.5px]',
-                s.color === 'red'
-                  ? 'text-[var(--red)]'
-                  : s.color === 'gold'
-                    ? 'text-[var(--gold)]'
-                    : s.color === 'green'
-                      ? 'text-[var(--teal)]'
-                      : 'text-[var(--accent)]',
-              ].join(' ')}
-            >
+          <div key={s.label} className="card p-5 flex flex-col items-center">
+            <div className={`text-2xl font-bold ${
+              s.color === 'red' ? 'text-[var(--red)]' : 
+              s.color === 'gold' ? 'text-[var(--gold)]' : 
+              s.color === 'green' ? 'text-[var(--accent)]' : 'text-[var(--accent)]'
+            }`}>
               {s.value}
             </div>
-            <div className="text-[12px] text-[var(--muted)]">{s.label}</div>
+            <div className="text-[12px] text-[var(--muted)] uppercase tracking-wider font-medium mt-1">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Toolbar */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <input
-          className="input"
-          style={{ maxWidth: 300 }}
-          placeholder="Tìm mã đơn, khách hàng..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="search-wrapper flex-1" style={{ position: 'relative' }}>
+            <IconSearch 
+              className="search-icon" 
+              size={16} 
+              style={{ 
+                position: 'absolute', 
+                left: '12px', 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                color: 'var(--muted)',
+                pointerEvents: 'none'
+              }} 
+            />
+            <input
+              className="input h-10 pl-10"
+              style={{ paddingLeft: '40px' }}
+              placeholder="Tìm mã đơn, khách hàng..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-secondary h-10 w-10 !p-0" onClick={loadOrders} title="Làm mới">
+            <IconRefresh size={18} />
+          </button>
+        </div>
         {pendingCount > 0 && (
-          <div
-            className="
-              flex items-center gap-2 rounded-lg border border-[rgba(234,179,8,0.4)]
-              bg-[rgba(234,179,8,0.08)] px-3 py-2 text-[12px] text-[var(--gold)]
-            "
-          >
+          <div className="flex items-center gap-2 rounded-xl bg-[rgba(234,179,8,0.1)] px-4 py-2 border border-[rgba(234,179,8,0.2)]">
             <IconWarning size={14} color="var(--gold)" />
-            Có <strong className="font-semibold">{pendingCount}</strong> đơn đang chờ xác nhận
+            <span className="text-[13px] text-[var(--gold)] font-medium">
+              Có <strong className="font-bold">{pendingCount}</strong> đơn đang chờ bạn xác nhận
+            </span>
           </div>
         )}
       </div>
 
-      <div className="card">
-        <div className="tab-row">
+      <div className="card !p-0 overflow-hidden">
+        <div className="tab-row h-12 !mb-0 px-4 border-b border-[var(--border)]">
           {TABS.map((t, i) => (
-            <button key={t} className={`tab ${tab === i ? 'active' : ''}`} onClick={() => setTab(i)}>{t}</button>
+            <button key={t} className={`tab !py-2 ${tab === i ? 'active' : ''}`} onClick={() => setTab(i)}>{t}</button>
           ))}
         </div>
         <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>SĐT</th>
-                <th>Sản phẩm</th>
-                <th>Thanh toán</th>
-                <th>Tổng tiền</th>
-                <th>Thời gian</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o) => (
-                <tr key={o.id}>
-                  <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{o.id}</td>
-                  <td style={{ fontWeight: 500 }}>{o.customer}</td>
-                  <td style={{ color: 'var(--muted)' }}>{o.phone}</td>
-                  <td>{o.product}</td>
-                  <td style={{ color: 'var(--muted)' }}>{o.payment}</td>
-                  <td style={{ color: 'var(--green)', fontWeight: 600 }}>{o.total}</td>
-                  <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.time}</td>
-                  <td><span className={`status-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span></td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        className="
-                          flex h-7 w-7 items-center justify-center rounded-md
-                          border border-[var(--border)] bg-[var(--surface2)]
-                          text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]
-                        "
-                        title="Xem chi tiết"
-                      >
-                        <IconEye size={14} />
-                      </button>
-                      {o.status === 'pending' && (
-                        <>
-                          <button
-                            className="
-                              flex h-7 w-7 items-center justify-center rounded-md
-                              border border-[rgba(52,211,153,0.5)] bg-[rgba(52,211,153,0.12)]
-                              text-[var(--teal)] transition-colors hover:border-[var(--teal)]
-                            "
-                            title="Xác nhận"
-                            onClick={() => confirmOrder(o.id)}
-                          >
-                            <IconCheckCircle size={14} />
-                          </button>
-                          <button
-                            className="
-                              flex h-7 w-7 items-center justify-center rounded-md
-                              border border-[rgba(248,113,113,0.6)] bg-[rgba(248,113,113,0.12)]
-                              text-[var(--red)] transition-colors hover:border-[var(--red)]
-                            "
-                            title="Hủy đơn"
-                            onClick={() => cancelOrder(o.id)}
-                          >
-                            <IconWarning size={14} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
+          {loading ? (
+            <div className="p-20 text-center text-[var(--muted)] animate-pulse flex flex-col items-center gap-3">
+              <IconRefresh size={24} className="animate-spin" />
+              Đang cập nhật danh sách đơn hàng...
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-20 text-center text-[var(--muted)]">Không có đơn hàng nào trong mục này</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Thông tin đơn</th>
+                  <th>Thanh toán</th>
+                  <th>Tổng tiền</th>
+                  <th className="text-right">Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((o: any) => (
+                  <tr key={o._realId}>
+                    <td>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[var(--accent)] text-[13px]">{o.id}</span>
+                        <span className="text-[11px] text-[var(--muted)] flex items-center gap-1">
+                          <IconClock size={10} /> {o.time}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex flex-col">
+                        <div className="font-semibold text-text-main flex items-center gap-1.5 text-[13px]">
+                          <IconUser size={12} className="text-[var(--muted)]" /> {o.customer}
+                        </div>
+                        <div className="text-[11px] text-[var(--muted)] flex items-center gap-1">
+                          <IconPhone size={10} /> {o.phone}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex flex-col max-w-[200px]">
+                        <span className="text-[13px] font-medium text-text-main line-clamp-1">{o.product}</span>
+                        <span className={`status-badge !w-fit mt-1 ${o.status}`}>{STATUS_LABEL[o.status as OrderStatus]}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-1.5 text-[var(--muted)] text-[12px]">
+                        <IconCreditCard size={12} /> {o.payment}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="font-bold text-[var(--accent)] text-[14px]">{o.total}</span>
+                    </td>
+                    <td className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="btn-icon p-2 hover:bg-[var(--surface2)] text-[var(--muted)] hover:text-[var(--accent)]"
+                          title="Xem chi tiết"
+                        >
+                          <IconEye size={16} />
+                        </button>
+                        {o.status === 'pending' && (
+                          <>
+                            <button
+                              className="btn-icon p-2 bg-[rgba(255,143,163,0.1)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white"
+                              title="Xác nhận đơn"
+                              onClick={() => confirmOrder(o.id, o._realId)}
+                            >
+                              <IconCheckCircle size={16} />
+                            </button>
+                            <button
+                              className="btn-icon p-2 bg-[rgba(248,113,113,0.1)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white"
+                              title="Hủy đơn"
+                              onClick={() => cancelOrder(o.id, o._realId)}
+                            >
+                              <IconWarning size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
   )
 }
+

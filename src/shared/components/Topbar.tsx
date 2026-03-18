@@ -12,14 +12,15 @@ export default function Topbar({ title, extra }: TopbarProps) {
     <header
       className="
         sticky top-0 z-50 flex items-center gap-4
-        border-b border-[var(--border)]
-        bg-[rgba(11,14,24,0.85)] backdrop-blur-[16px]
-        px-7 py-3.5
+        border-b border-[#fce7ef]
+        bg-white/90 backdrop-blur-[16px]
+        px-7 py-3.5 shadow-sm shadow-pink-50/50
       "
     >
-      <h1 className="flex-1 text-[17px] font-semibold tracking-[-0.3px]">
+      <h1 className="flex-1 text-[18px] font-bold tracking-tight text-text-main">
         {title}
       </h1>
+
 
       <div className="flex items-center gap-2.5">
         {extra}

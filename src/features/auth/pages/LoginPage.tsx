@@ -29,8 +29,6 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login({ email, password })
-      // Sau khi login thành công, AuthContext cập nhật user
-      // → RootRedirect (/portal) sẽ tự chuyển hướng đúng portal
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname
       navigate(from ?? '/portal', { replace: true })
     } catch (err) {
@@ -38,14 +36,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const fillDemo = (role: 'admin' | 'staff' | 'member') => {
-    if (role === 'admin')      setEmail('admin@gmail.com')
-    else if (role === 'staff') setEmail('staff@gmail.com')
-    else                       setEmail('member@gmail.com')
-    setPassword('123456')
-    setError('')
   }
 
   return (
@@ -85,7 +75,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="member@gmail.com / admin@gmail.com..."
+                placeholder="admin@milkcare.com / staff@milkcare.com..."
                 autoComplete="email"
                 className="w-full pl-10 pr-4 py-3 bg-[#fff9fa] border border-pink-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-text-main placeholder:text-text-muted/40 transition-all"
               />
@@ -134,41 +124,6 @@ export default function LoginPage() {
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
-
-        <div className="mt-8 relative z-10">
-          <div className="relative flex items-center justify-center mb-3">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-pink-50" />
-            </div>
-            <span className="relative px-4 bg-white text-xs font-bold text-text-muted uppercase tracking-wider">
-              Demo nhanh
-            </span>
-          </div>
-          <div className="flex justify-center gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => fillDemo('member')}
-              className="px-3 py-1.5 rounded-full border border-pink-100 bg-[#fff9fa] text-text-main font-semibold hover:bg-primary/10 transition-colors"
-            >
-              Member
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('staff')}
-              className="px-3 py-1.5 rounded-full border border-pink-100 bg-[#fff9fa] text-text-main font-semibold hover:bg-primary/10 transition-colors"
-            >
-              Staff
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('admin')}
-              className="px-3 py-1.5 rounded-full border border-pink-100 bg-[#fff9fa] text-text-main font-semibold hover:bg-primary/10 transition-colors"
-            >
-              Admin
-            </button>
-            <span className="text-[11px] text-text-muted ml-1">pass: 123456</span>
-          </div>
-        </div>
 
         <div className="mt-10 text-center relative z-10">
           <p className="text-sm text-text-muted font-medium">

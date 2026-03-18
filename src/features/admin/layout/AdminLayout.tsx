@@ -3,13 +3,13 @@ import Sidebar from './Sidebar'
 import Topbar from '../../../shared/components/Topbar'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/orders':    'Quản lý Đơn hàng',
-  '/products':  'Quản lý Sản phẩm',
-  '/accounts':  'Quản lý Tài khoản',
-  '/vouchers':  'Quản lý Voucher',
-  '/posts':     'Quản lý Bài viết',
-  '/revenue':   'Báo cáo Doanh thu',
+  '/admin/dashboard': 'Dashboard',
+  '/admin/orders':    'Quản lý Đơn hàng',
+  '/admin/products':  'Quản lý Sản phẩm',
+  '/admin/accounts':  'Quản lý Tài khoản',
+  '/admin/vouchers':  'Quản lý Voucher',
+  '/admin/posts':     'Quản lý Bài viết',
+  '/admin/revenue':   'Báo cáo Doanh thu',
 }
 
 export default function AdminLayout() {

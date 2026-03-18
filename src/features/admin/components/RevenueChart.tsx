@@ -38,17 +38,20 @@ const DATA_1Y: MonthData[] = [
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   return (
-    <div className="flex flex-col gap-1 rounded-[10px] border border-[var(--border)] bg-[var(--surface2)] px-3.5 py-2.5 text-[12px]">
-      <div className="mb-1 font-semibold text-[var(--text)]">{label}</div>
-      <div style={{ color: 'var(--accent)' }}>Doanh thu: {payload[0]?.value}M ₫</div>
-      <div style={{ color: 'var(--teal)' }}>Đơn hàng: {payload[1]?.value}</div>
+    <div className="flex flex-col gap-1 rounded-[12px] border border-[#fce7ef] bg-white px-3.5 py-2.5 text-[12px] shadow-lg shadow-pink-100/20">
+      <div className="mb-1 font-bold text-[var(--text)]">{label}</div>
+      <div style={{ color: 'var(--accent)', fontWeight: 600 }}>Doanh thu: {payload[0]?.value}M ₫</div>
+      <div style={{ color: 'var(--teal)', fontWeight: 600 }}>Đơn hàng: {payload[1]?.value}</div>
     </div>
+
   )
 }
 
-export default function RevenueChart() {
+export default function RevenueChart({ data }: { data?: MonthData[] }) {
   const [period, setPeriod] = useState<'6m' | '1y'>('6m')
-  const data = period === '6m' ? DATA_6M : DATA_1Y
+  
+  // Use provided data or fallback to empty array
+  const displayData = data || (period === '6m' ? DATA_6M : DATA_1Y)
 
   return (
     <div className="card">
@@ -60,8 +63,9 @@ export default function RevenueChart() {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={160}>
-        <BarChart data={data} barGap={4}>
-          <CartesianGrid stroke="rgba(31,38,64,.6)" vertical={false} />
+        <BarChart data={displayData} barGap={4}>
+          <CartesianGrid stroke="#f1f5f9" vertical={false} />
+
           <XAxis dataKey="month" tick={{ fill: 'var(--muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
           <YAxis hide />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(108,142,255,.05)' }} />

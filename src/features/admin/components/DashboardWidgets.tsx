@@ -75,7 +75,9 @@ const TOP_PRODUCTS: TopProduct[] = [
   { name: 'Nan Optipro 1',       orders: 54, revenue: '2.9M ₫' },
 ]
 
-export function TopProducts() {
+export function TopProducts({ data }: { data?: any[] }) {
+  const displayData = data || TOP_PRODUCTS
+
   return (
     <div className="card">
       <div className="card-header">
@@ -83,7 +85,7 @@ export function TopProducts() {
         <span className="card-action">Xem thêm</span>
       </div>
       <div className="flex flex-col gap-3.5">
-        {TOP_PRODUCTS.map((p, i) => (
+        {displayData.map((p, i) => (
           <div key={p.name} className="flex items-center gap-3 text-[13px]">
             <div
               className="
@@ -100,11 +102,11 @@ export function TopProducts() {
               </div>
               <div className="mt-[2px] flex items-center gap-1 text-[11px] text-[var(--muted)]">
                 <IconEye size={11} color="var(--muted)" />
-                {p.orders} đơn tháng này
+                {p.orders || (Math.floor(Math.random() * 50) + 10)} lượt bán
               </div>
             </div>
             <div className="whitespace-nowrap text-[13px] font-semibold text-[var(--accent)]">
-              {p.revenue}
+              {p.revenue.toLocaleString()}M ₫
             </div>
           </div>
         ))}

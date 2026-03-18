@@ -47,13 +47,17 @@ export interface Order {
 }
 
 export interface Product {
-  id: string
+  id?: string
+  _id: string
   name: string
   category: string
-  price: string
+  price: number
   stock: number
   sold: number
+  image?: string
   status: ActiveStatus
+  updated_at?: string
+  created_at?: string
 }
 
 export interface Account {
@@ -103,7 +107,10 @@ export interface NavGroup {
 export interface IconProps {
   size?: number
   color?: string
+  className?: string
+  style?: React.CSSProperties
 }
+
 
 export interface StatCardData {
   label: string

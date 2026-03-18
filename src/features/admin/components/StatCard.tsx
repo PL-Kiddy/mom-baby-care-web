@@ -32,11 +32,12 @@ export default function StatCard({ label, value, change, changeType, icon: Icon,
   return (
     <div
       className="
-        rounded-[var(--radius)] border border-[var(--border)]
-        bg-[var(--surface)] px-5 py-4 backdrop-blur-[8px]
-        transition-transform transition-colors hover:-translate-y-0.5
+        rounded-[var(--radius)] border border-[#fce7ef]
+        bg-white px-5 py-5 shadow-sm shadow-pink-50/50
+        transition-all hover:-translate-y-1 hover:shadow-md hover:shadow-pink-100/50
       "
     >
+
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="text-[12px] font-medium uppercase tracking-[0.6px] text-[var(--muted)]">
           {label}

@@ -7,6 +7,7 @@ import './index.css'
 import './assets/globals.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>

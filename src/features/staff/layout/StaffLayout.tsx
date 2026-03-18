@@ -64,13 +64,13 @@ export default function StaffLayout() {
               flex-shrink-0
             "
           >
-            <IconMilk size={22} color="var(--teal)" />
+            <IconMilk size={22} color="var(--accent)" />
           </div>
           <div>
             <div className="text-[16px] font-bold tracking-[-0.3px]">
               MilkCare
             </div>
-            <div className="mt-[2px] text-[10px] font-medium uppercase tracking-[1.5px] text-[var(--teal)]">
+            <div className="mt-[2px] text-[10px] font-medium uppercase tracking-[1.5px] text-[var(--accent)]">
               Staff Portal
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function StaffLayout() {
                       'mb-[2px] flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[var(--muted)] no-underline transition-all',
                       'hover:bg-[var(--surface2)] hover:text-[var(--text)]',
                       isActive
-                        ? 'border-l-2 border-l-[var(--teal)] bg-[rgba(52,211,153,0.1)] pl-2 text-[var(--teal)]'
+                        ? 'border-l-2 border-l-[var(--accent)] bg-[rgba(255,143,163,0.1)] pl-2 text-[var(--accent)]'
                         : '',
                     ].join(' ')
                   }
@@ -101,7 +101,7 @@ export default function StaffLayout() {
                   </span>
                   {label}
                   {badge !== undefined && (
-                    <span className="ml-auto rounded-[20px] bg-[var(--teal)] px-1.5 py-[2px] text-[9px] font-bold text-[#0b0e18]">
+                    <span className="ml-auto rounded-[20px] bg-[var(--accent)] px-1.5 py-[2px] text-[9px] font-bold text-[#0b0e18]">
                       {badge}
                     </span>
                   )}
@@ -115,7 +115,7 @@ export default function StaffLayout() {
           <div
             className="
               flex h-8 w-8 items-center justify-center rounded-lg
-              bg-[linear-gradient(135deg,var(--teal),var(--accent))]
+              bg-[linear-gradient(135deg,var(--accent),var(--accent2))]
               text-[13px] font-bold text-[#0b0e18]
             "
           >
@@ -125,7 +125,7 @@ export default function StaffLayout() {
             <div className="truncate text-[13px] font-semibold">
               {user?.name ?? 'Staff'}
             </div>
-            <div className="truncate text-[11px] text-[var(--teal)]">
+            <div className="truncate text-[11px] text-[var(--accent)]">
               {user?.email}
             </div>
           </div>
