@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { registerApi } from '../../auth/services/authService'
 
 const CustomerRegisterPage = () => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -9,6 +11,9 @@ const CustomerRegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -17,10 +22,49 @@ const CustomerRegisterPage = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Xử lý đăng ký
-    console.log('Register:', formData);
+    setError(null)
+    setSuccess(null)
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const result = await registerApi({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        phone_number: formData.phone,
+        gender: 'female',
+        date_of_birth: new Date().toISOString(),
+        address: {
+          street: '',
+          ward: '',
+          district: '',
+          city: '',
+          country: 'Việt Nam',
+          zipcode: '',
+        },
+      })
+      setSuccess('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.')
+      setTimeout(
+        () =>
+          navigate('/after-register-verify', {
+            replace: true,
+            state: { email: result?.email ?? formData.email },
+          }),
+        1500,
+      )
+    } catch (err: any) {
+      setError(err.message ?? 'Đăng ký thất bại')
+    } finally {
+      setIsSubmitting(false)
+    }
   };
 
   return (
@@ -160,12 +204,25 @@ const CustomerRegisterPage = () => {
             </div>
           </div>
 
+          {/* Error / Success */}
+          {error && (
+            <p className="text-sm text-red-500 font-medium text-center">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="text-sm text-emerald-600 font-medium text-center">
+              {success}
+            </p>
+          )}
+
           {/* Submit Button */}
           <button
-            type="submit"
-            className="w-full bg-primary-dark hover:bg-primary text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-2"
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-primary-dark hover:bg-primary text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Đăng ký tài khoản
+          {isSubmitting ? 'Đang đăng ký...' : 'Đăng ký tài khoản'}
           </button>
         </form>
 

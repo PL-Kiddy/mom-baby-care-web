@@ -16,11 +16,13 @@ export interface LoginCredentials {
 export interface AuthResponse {
   user: AuthUser
   token: string
+  refreshToken?: string
 }
 
 export interface AuthContextType {
   user: AuthUser | null
   token: string | null
+  refreshToken: string | null
   isLoading: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => void

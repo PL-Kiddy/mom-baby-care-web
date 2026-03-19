@@ -1,16 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { forgotPasswordApi } from '../../auth/services/authService'
 
 const CustomerForgotPasswordPage = () => {
-  const [identifier, setIdentifier] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [email, setEmail] = useState('')
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Xử lý quên mật khẩu
-    console.log('Forgot Password:', { identifier });
-    setIsSubmitted(true);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+    try {
+      await forgotPasswordApi(email)
+      setIsSubmitted(true)
+    } catch (err: any) {
+      setError(err.message ?? 'Không thể gửi email đặt lại mật khẩu')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="bg-background-light font-display min-h-screen flex flex-col justify-center items-center p-4">
@@ -33,7 +43,7 @@ const CustomerForgotPasswordPage = () => {
             <h2 className="text-xl font-extrabold text-text-main">Quên mật khẩu?</h2>
             <p className="text-text-muted text-sm font-medium mt-1">
               {!isSubmitted 
-                ? 'Nhập email hoặc số điện thoại để đặt lại mật khẩu'
+                ? 'Nhập email để nhận link đặt lại mật khẩu'
                 : 'Chúng tôi đã gửi link đặt lại mật khẩu đến bạn'
               }
             </p>
@@ -44,34 +54,41 @@ const CustomerForgotPasswordPage = () => {
           <>
             {/* Forgot Password Form */}
             <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
-              {/* Email/Phone Input */}
+              {/* Email Input */}
               <div className="space-y-1">
-                <label htmlFor="identifier" className="text-sm font-bold text-text-main ml-1">
-                  Email hoặc Số điện thoại
+                <label htmlFor="email" className="text-sm font-bold text-text-main ml-1">
+                  Email
                 </label>
                 <div className="relative group">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/60 group-focus-within:text-primary transition-colors">
                     alternate_email
                   </span>
                   <input
-                    type="text"
-                    id="identifier"
-                    name="identifier"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="mẹ@vidu.com hoặc 0912345678"
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="me@vidu.com"
                     className="w-full pl-10 pr-4 py-3 bg-[#fff9fa] border border-pink-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-text-main placeholder:text-text-muted/40 transition-all"
                     required
                   />
                 </div>
               </div>
 
+              {error && (
+                <p className="text-sm text-red-500 font-medium text-center">
+                  {error}
+                </p>
+              )}
+
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-primary-dark hover:bg-primary text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-2"
+                disabled={isLoading}
+                className="w-full bg-primary-dark hover:bg-primary text-white font-extrabold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Gửi link đặt lại mật khẩu
+                {isLoading ? 'Đang gửi...' : 'Gửi link đặt lại mật khẩu'}
               </button>
             </form>
 
@@ -102,7 +119,7 @@ const CustomerForgotPasswordPage = () => {
                 </div>
                 <h3 className="text-lg font-bold text-text-main mb-2">Email đã được gửi!</h3>
                 <p className="text-sm text-text-muted">
-                  Vui lòng kiểm tra email <span className="font-bold text-text-main">{identifier}</span> và làm theo hướng dẫn để đặt lại mật khẩu.
+                  Vui lòng kiểm tra email <span className="font-bold text-text-main">{email}</span> và làm theo hướng dẫn để đặt lại mật khẩu.
                 </p>
                 <p className="text-xs text-text-muted mt-3">
                   Không nhận được email? Kiểm tra thư mục spam hoặc
@@ -110,7 +127,7 @@ const CustomerForgotPasswordPage = () => {
               </div>
 
               <button
-                onClick={() => setIsSubmitted(false)}
+                onClick={handleSubmit}
                 className="w-full bg-background-light text-primary font-bold py-3 rounded-xl hover:bg-pink-100 transition-all"
               >
                 Gửi lại email

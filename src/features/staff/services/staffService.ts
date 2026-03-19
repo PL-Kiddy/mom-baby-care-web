@@ -1,5 +1,7 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 
+// Backend: GET/PATCH /api/admin/reports (adminReportsRouters mount tại /api/admin)
+
 function authHeaders(token: string) {
   return {
     'Content-Type': 'application/json',
@@ -37,11 +39,17 @@ export async function getReportsApi(token: string) {
 }
 
 
-export async function updateReportStatusApi(token: string, reportId: string, status: string) {
+/** Backend chấp nhận status: 'resolved' | 'rejected' (resolveReportValidator). resolved_note tùy chọn. */
+export async function updateReportStatusApi(
+  token: string,
+  reportId: string,
+  status: string,
+  resolved_note?: string
+) {
   const res = await fetch(`${BASE_URL}/api/admin/reports/${reportId}`, {
     method: 'PATCH',
     headers: authHeaders(token),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, ...(resolved_note != null && { resolved_note }) }),
   })
   const json = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(json.message ?? 'Không thể cập nhật báo cáo')

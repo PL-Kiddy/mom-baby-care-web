@@ -5,15 +5,21 @@ import HomePage from './features/shop/pages/HomePage'
 import ProductListPage from './features/shop/pages/ProductListPage'
 import ProductDetailPage from './features/shop/pages/ProductDetailPage'
 import BlogListPage from './features/shop/pages/BlogListPage'
+import BlogDetailPage from './features/shop/pages/BlogDetailPage'
 import AccountProfilePage from './features/shop/pages/AccountProfilePage'
 import AccountOrdersPage from './features/shop/pages/AccountOrdersPage'
+import AccountRewardsPage from './features/shop/pages/AccountRewardsPage'
+import MemberReportPage from './features/shop/pages/MemberReportPage'
 import CustomerRegisterPage from './features/shop/pages/CustomerRegisterPage'
 import CustomerForgotPasswordPage from './features/shop/pages/CustomerForgotPasswordPage'
+import ResetPasswordPage from './features/shop/pages/ResetPasswordPage'
+import PaymentResultPage from './features/shop/pages/PaymentResultPage'
 import CartPage from './features/shop/pages/CartPage'
 
 // Admin/Staff auth + layouts
 import LoginPage from './features/auth/pages/LoginPage'
 import ProtectedRoute from './shared/components/ProtectedRoute'
+import MemberRoute from './shared/components/MemberRoute'
 import RootRedirect from './shared/components/RootRedirect'
 
 import AdminLayout from './features/admin/layout/AdminLayout'
@@ -42,12 +48,21 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<CustomerRegisterPage />} />
       <Route path="/forgot-password" element={<CustomerForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/blog" element={<BlogListPage />} />
-      <Route path="/account/profile" element={<AccountProfilePage />} />
-      <Route path="/account/orders" element={<AccountOrdersPage />} />
+      <Route path="/blog/:id" element={<BlogDetailPage />} />
+      <Route path="/payment-result" element={<PaymentResultPage />} />
+
+      {/* Member-only account area */}
+      <Route element={<MemberRoute />}>
+        <Route path="/account/profile" element={<AccountProfilePage />} />
+        <Route path="/account/orders" element={<AccountOrdersPage />} />
+        <Route path="/account/rewards" element={<AccountRewardsPage />} />
+        <Route path="/account/report" element={<MemberReportPage />} />
+      </Route>
 
       {/* Admin/Staff auth portal (giữ path cũ, redirect về /login) */}
       <Route path="/admin/login" element={<Navigate to="/login" replace />} />
