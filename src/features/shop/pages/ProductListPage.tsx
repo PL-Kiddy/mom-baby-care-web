@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { getProductsApi } from '../services/shopService'
+import { type CartItem } from '../../../shared/utils/cartStorage'
+import { useAuth } from '../../../shared/hooks/useAuth'
+import { replaceCartWithSingleItemApi } from '../services/cartService'
 
 interface ProductListItem {
   _id: string
@@ -13,6 +16,8 @@ interface ProductListItem {
 }
 
 export default function ProductListPage() {
+  const navigate = useNavigate()
+  const { user, token, refreshToken } = useAuth()
   const [products, setProducts] = useState<ProductListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,6 +63,23 @@ export default function ProductListPage() {
   const formatPrice = (price?: number) => {
     if (price == null) return 'Liên hệ'
     return price.toLocaleString('vi-VN') + 'đ'
+  }
+
+  const quickBuy = (p: ProductListItem) => {
+    const item: CartItem = {
+      id: p._id,
+      name: p.name,
+      category: p.category ?? '',
+      price: p.price ?? 0,
+      quantity: 1,
+      image: p.image ?? '',
+    }
+    if (!user || !token || !refreshToken) {
+      navigate('/login', { state: { from: { pathname: '/products' } } })
+      return
+    }
+    void replaceCartWithSingleItemApi(token, refreshToken, { product_id: item.id, quantity: 1 })
+    navigate('/cart')
   }
 
   return (
@@ -115,10 +137,15 @@ export default function ProductListPage() {
         {!loading && !error && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {filtered.map((p) => (
-              <Link
+              <div
                 key={p._id}
-                to={`/products/${p._id}`}
-                className="group bg-white rounded-2xl border border-[#fce7ef] hover:border-primary/40 hover:shadow-lg transition-all overflow-hidden flex flex-col"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/products/${p._id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') navigate(`/products/${p._id}`)
+                }}
+                className="group bg-white rounded-2xl border border-[#fce7ef] hover:border-primary/40 hover:shadow-lg transition-all overflow-hidden flex flex-col cursor-pointer"
               >
                 <div className="relative aspect-square p-3 bg-[#fffafa] flex items-center justify-center">
                   {p.image ? (
@@ -145,8 +172,28 @@ export default function ProductListPage() {
                   <p className="mt-auto text-primary font-extrabold">
                     {formatPrice(p.price)}
                   </p>
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <Link
+                      to={`/products/${p._id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs font-bold text-primary hover:underline"
+                    >
+                      Xem chi tiết
+                    </Link>
+                    <button
+                      type="button"
+                      className="text-xs font-bold text-text-muted hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        quickBuy(p)
+                      }}
+                    >
+                      Mua ngay
+                    </button>
+                  </div>
                 </div>
-              </Link>
+              </div>
             ))}
             {filtered.length === 0 && (
               <p className="col-span-full text-center text-text-muted">

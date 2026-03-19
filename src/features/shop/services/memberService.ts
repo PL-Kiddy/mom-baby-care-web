@@ -34,10 +34,12 @@ export async function checkVoucherApi(
   payload: { code: string; orderTotal: number },
 ) {
   return withRefresh(token, refreshToken, async (accessToken) => {
+    const { code, orderTotal } = payload
     const res = await fetch(`${BASE_URL}/api/vouchers/check`, {
       method: 'POST',
       headers: authHeaders(accessToken),
-      body: JSON.stringify(payload),
+      // Backend validator/controller yêu cầu: `code` + `total_amount`
+      body: JSON.stringify({ code, total_amount: orderTotal }),
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) {

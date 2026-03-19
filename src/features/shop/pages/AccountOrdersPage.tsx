@@ -8,9 +8,19 @@ import { getMyOrdersApi, cancelOrderApi } from '../services/orderService'
 interface MemberOrder {
   _id: string
   total_amount: number
-  status: 'pending' | 'processing' | 'completed' | 'cancelled'
-  payment_method: string
+  status: string
+  payment_method?: string
   created_at: string
+}
+
+function normalizeOrderStatus(status: string | undefined | null): 'pending' | 'processing' | 'completed' | 'cancelled' {
+  const s = (status ?? '').toLowerCase()
+  if (s === 'pending') return 'pending'
+  if (s === 'processing' || s === 'delivering') return 'processing'
+  if (s === 'completed' || s === 'delivered') return 'completed'
+  if (s === 'cancelled' || s === 'canceled') return 'cancelled'
+  // fallback: nếu backend trả dạng chưa map được thì coi như pending để UI không “giấu” nút
+  return 'pending'
 }
 
 export default function AccountOrdersPage() {
@@ -78,17 +88,20 @@ export default function AccountOrdersPage() {
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <span className="text-text-main">#{o._id.slice(-6)}</span>
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#fff0f4] text-primary font-bold uppercase">
-                        {o.status === 'completed'
-                          ? 'Hoàn thành'
-                          : o.status === 'processing'
-                            ? 'Đang xử lý'
-                            : o.status === 'pending'
-                              ? 'Đang chờ'
-                              : 'Đã hủy'}
+                        {(() => {
+                          const ns = normalizeOrderStatus(o.status)
+                          return ns === 'completed'
+                            ? 'Hoàn thành'
+                            : ns === 'processing'
+                              ? 'Đang xử lý'
+                              : ns === 'pending'
+                                ? 'Đang chờ'
+                                : 'Đã hủy'
+                        })()}
                       </span>
                     </div>
                     <p className="text-xs text-text-muted mt-1">
-                      {new Date(o.created_at).toLocaleString('vi-VN')} • {o.payment_method}
+                      {new Date(o.created_at).toLocaleString('vi-VN')} • {o.payment_method ?? 'Chưa có thông tin thanh toán'}
                     </p>
                   </div>
                   <div className="text-right space-y-1">
@@ -103,7 +116,7 @@ export default function AccountOrdersPage() {
                         <span className="material-symbols-outlined text-[16px]">visibility</span>
                         Xem chi tiết
                       </button>
-                      {o.status === 'pending' && token && (
+                      {normalizeOrderStatus(o.status) === 'pending' && token && (
                         <button
                           className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 hover:underline"
                           onClick={async () => {

@@ -29,6 +29,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Backend: member muốn tạo/xem đơn cần JWT claim `verify = 1` (UserVerifyStatus.Verified).
+    // Khi FE refresh token, access token có thể thiếu claim `verify` => gọi POST /orders bị 403.
+    // Tránh tình trạng này bằng cách decode token ngay khi load.
+    try {
+      const parts = savedAccess.split('.')
+      if (parts.length >= 2) {
+        const payloadBase64Url = parts[1]
+        const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const json = atob(payloadBase64)
+        const payload = JSON.parse(json)
+        const userRole = payload?.user_role != null ? Number(payload.user_role) : undefined
+        const verify = payload?.verify != null ? Number(payload.verify) : undefined
+        if (userRole === 1 && verify !== 1) {
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(REFRESH_TOKEN_KEY)
+          setUser(null)
+          setToken(null)
+          setRefreshToken(null)
+          setLoading(false)
+          return
+        }
+      }
+    } catch {
+      // Nếu decode thất bại thì vẫn chạy flow getMe/refresh như bình thường
+    }
+
     const verify = async () => {
       try {
         const me = await getMeApi(savedAccess)

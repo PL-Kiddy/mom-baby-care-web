@@ -71,21 +71,31 @@ const Header: React.FC = () => {
 
           {isLoggedIn && (
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenMenu((v) => !v)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[#fff0f4] hover:bg-primary/20 text-text-main text-sm font-semibold transition-colors"
-              >
-                <div className="size-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
-                  {initials ?? 'ME'}
-                </div>
-                <span className="hidden sm:block max-w-[120px] truncate">
-                  {user?.name ?? 'Thành viên'}
-                </span>
-                <span className="material-symbols-outlined text-[18px] text-primary">
-                  expand_more
-                </span>
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/account/profile"
+                  onClick={() => setOpenMenu(false)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[#fff0f4] hover:bg-primary/20 text-text-main text-sm font-semibold transition-colors"
+                >
+                  <div className="size-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
+                    {initials ?? 'ME'}
+                  </div>
+                  <span className="hidden sm:block max-w-[120px] truncate">
+                    {user?.name ?? 'Thành viên'}
+                  </span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setOpenMenu((v) => !v)}
+                  className="p-1.5 rounded-full bg-[#fff0f4] hover:bg-primary/20 text-primary transition-colors"
+                  aria-label="Mở menu tài khoản"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    expand_more
+                  </span>
+                </button>
+              </div>
 
               {openMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-[#fce7ef] rounded-2xl shadow-lg shadow-pink-100/60 py-2 z-50">
@@ -97,6 +107,14 @@ const Header: React.FC = () => {
                       {user?.email}
                     </div>
                   </div>
+                  <Link
+                    to="/account/profile"
+                    onClick={() => setOpenMenu(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-main font-semibold hover:bg-[#fff0f4] transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-primary">edit</span>
+                    <span>Chỉnh sửa hồ sơ</span>
+                  </Link>
                   <button
                     type="button"
                     onClick={handleLogout}

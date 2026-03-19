@@ -3,6 +3,9 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { getPostByIdApi } from '../services/shopService'
+import { type CartItem } from '../../../shared/utils/cartStorage'
+import { useAuth } from '../../../shared/hooks/useAuth'
+import { replaceCartWithSingleItemApi } from '../services/cartService'
 
 interface BlogPostDetail {
   _id: string
@@ -22,6 +25,7 @@ interface BlogPostDetail {
 export default function BlogDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user, token, refreshToken } = useAuth()
   const [post, setPost] = useState<BlogPostDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +57,23 @@ export default function BlogDetailPage() {
   const formatPrice = (price?: number) => {
     if (price == null) return 'Liên hệ'
     return price.toLocaleString('vi-VN') + 'đ'
+  }
+
+  const quickBuy = (p: { _id: string; name: string; price?: number; image?: string }) => {
+    const item: CartItem = {
+      id: p._id,
+      name: p.name,
+      category: '',
+      price: p.price ?? 0,
+      quantity: 1,
+      image: p.image ?? '',
+    }
+    if (!user || !token || !refreshToken) {
+      navigate('/login', { state: { from: { pathname: '/blog' } } })
+      return
+    }
+    void replaceCartWithSingleItemApi(token, refreshToken, { product_id: item.id, quantity: 1 })
+    navigate('/cart')
   }
 
   return (
@@ -119,7 +140,14 @@ export default function BlogDetailPage() {
                     <button
                       key={p._id}
                       type="button"
-                      onClick={() => navigate(`/products/${p._id}`)}
+                      onClick={() =>
+                        quickBuy({
+                          _id: p._id,
+                          name: p.name,
+                          price: p.price,
+                          image: p.image,
+                        })
+                      }
                       className="flex items-center gap-3 p-3 rounded-2xl border border-pink-50 hover:border-primary/40 hover:shadow-md bg-[#fffafa] text-left"
                     >
                       <div className="size-14 rounded-xl bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">

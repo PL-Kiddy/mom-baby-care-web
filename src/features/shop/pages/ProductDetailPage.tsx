@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { getProductByIdApi } from '../services/shopService'
 import { createReviewApi, getProductReviewsApi } from '../services/memberService'
 import { useAuth } from '../../../shared/hooks/useAuth'
+import { type CartItem } from '../../../shared/utils/cartStorage'
+import { addToCartApi, replaceCartWithSingleItemApi } from '../services/cartService'
 
 interface ProductDetail {
   _id: string
@@ -27,6 +29,7 @@ interface ProductReview {
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { token, refreshToken, user } = useAuth()
   const [product, setProduct] = useState<ProductDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,6 +77,41 @@ export default function ProductDetailPage() {
   const formatPrice = (price?: number) => {
     if (price == null) return 'Liên hệ'
     return price.toLocaleString('vi-VN') + 'đ'
+  }
+
+  const quickBuy = async () => {
+    if (!product) return
+    if (!token || !refreshToken) {
+      navigate('/login', { state: { from: { pathname: `/products/${id ?? ''}` } } })
+      return
+    }
+    const item: CartItem = {
+      id: product._id,
+      name: product.name,
+      category: product.category ?? '',
+      price: product.price ?? 0,
+      quantity: 1,
+      image: product.image ?? '',
+    }
+    await replaceCartWithSingleItemApi(token, refreshToken, { product_id: item.id, quantity: 1 })
+    navigate('/cart')
+  }
+
+  const addToCart = async () => {
+    if (!product) return
+    if (!token || !refreshToken) {
+      navigate('/login', { state: { from: { pathname: `/products/${id ?? ''}` } } })
+      return
+    }
+    const item: CartItem = {
+      id: product._id,
+      name: product.name,
+      category: product.category ?? '',
+      price: product.price ?? 0,
+      quantity: 1,
+      image: product.image ?? '',
+    }
+    await addToCartApi(token, refreshToken, { product_id: item.id, quantity: 1 })
   }
 
   return (
@@ -155,10 +193,24 @@ export default function ProductDetailPage() {
                 {product.description ??
                   'Chi tiết sản phẩm sẽ được cập nhật từ nội dung mô tả trong hệ thống.'}
               </p>
-              <button className="mt-4 inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-primary-dark hover:bg-primary text-white font-bold shadow-lg shadow-primary/30">
-                <span className="material-symbols-outlined">add_shopping_cart</span>
-                Thêm vào giỏ hàng
-              </button>
+              <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={quickBuy}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-primary-dark hover:bg-primary text-white font-bold shadow-lg shadow-primary/30 flex-1"
+                >
+                  <span className="material-symbols-outlined">payments</span>
+                  Mua ngay
+                </button>
+                <button
+                  type="button"
+                  onClick={addToCart}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-white hover:bg-[#fff0f4] border border-[#fce7ef] text-text-main font-bold shadow-sm flex-1"
+                >
+                  <span className="material-symbols-outlined">add_shopping_cart</span>
+                  Thêm vào giỏ
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -15,7 +15,6 @@ import ProductListPage from '../features/shop/pages/ProductListPage'
 import ProductDetailPage from '../features/shop/pages/ProductDetailPage'
 import BlogListPage from '../features/shop/pages/BlogListPage'
 import BlogDetailPage from '../features/shop/pages/BlogDetailPage'
-import PaymentResultPage from '../features/shop/pages/PaymentResultPage'
 import AccountProfilePage from '../features/shop/pages/AccountProfilePage'
 import AccountOrdersPage from '../features/shop/pages/AccountOrdersPage'
 import AccountRewardsPage from '../features/shop/pages/AccountRewardsPage'
@@ -60,7 +59,7 @@ export default function App() {
       <Route path="/blog" element={<BlogListPage />} />
       <Route path="/blog/:id" element={<BlogDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
-      <Route path="/payment-result" element={<PaymentResultPage />} />
+      {/* MoMo disabled: không còn route payment-result */}
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/after-register-verify" element={<AfterRegisterVerifyNoticePage />} />
 

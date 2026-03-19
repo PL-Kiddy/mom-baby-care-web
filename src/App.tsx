@@ -8,12 +8,12 @@ import BlogListPage from './features/shop/pages/BlogListPage'
 import BlogDetailPage from './features/shop/pages/BlogDetailPage'
 import AccountProfilePage from './features/shop/pages/AccountProfilePage'
 import AccountOrdersPage from './features/shop/pages/AccountOrdersPage'
+import AccountOrderDetailPage from './features/shop/pages/AccountOrderDetailPage'
 import AccountRewardsPage from './features/shop/pages/AccountRewardsPage'
 import MemberReportPage from './features/shop/pages/MemberReportPage'
 import CustomerRegisterPage from './features/shop/pages/CustomerRegisterPage'
 import CustomerForgotPasswordPage from './features/shop/pages/CustomerForgotPasswordPage'
 import ResetPasswordPage from './features/shop/pages/ResetPasswordPage'
-import PaymentResultPage from './features/shop/pages/PaymentResultPage'
 import CartPage from './features/shop/pages/CartPage'
 
 // Admin/Staff auth + layouts
@@ -54,12 +54,13 @@ export default function App() {
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/blog" element={<BlogListPage />} />
       <Route path="/blog/:id" element={<BlogDetailPage />} />
-      <Route path="/payment-result" element={<PaymentResultPage />} />
+      {/* MoMo disabled: không còn route payment-result */}
 
       {/* Member-only account area */}
       <Route element={<MemberRoute />}>
         <Route path="/account/profile" element={<AccountProfilePage />} />
         <Route path="/account/orders" element={<AccountOrdersPage />} />
+        <Route path="/account/orders/:orderId" element={<AccountOrderDetailPage />} />
         <Route path="/account/rewards" element={<AccountRewardsPage />} />
         <Route path="/account/report" element={<MemberReportPage />} />
       </Route>

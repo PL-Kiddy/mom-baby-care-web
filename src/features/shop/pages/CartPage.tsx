@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -6,87 +6,92 @@ import { getProductsApi } from '../services/shopService'
 import { checkVoucherApi } from '../services/memberService'
 import { useAuth } from '../../../shared/hooks/useAuth'
 import { createOrderApi } from '../services/orderService'
-import { createMoMoPaymentApi } from '../services/paymentService'
-
-interface CartItem {
-  id: string
-  name: string
-  category: string
-  price: number
-  quantity: number
-  image: string
-}
-
-const CART_STORAGE_KEY = 'milkcare_cart_items'
+import {
+  type CartItem,
+} from '../../../shared/utils/cartStorage'
+import {
+  clearCartApi,
+  getCartApi,
+  removeCartItemApi,
+  replaceCartWithSingleItemApi,
+  updateCartQuantityApi,
+} from '../services/cartService'
+import BANK_QR_IMAGE from '../../../assets/IMG_8711.JPG'
 
 const CartPage = () => {
   const navigate = useNavigate()
   const { user, token, refreshToken } = useAuth()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const orderSummaryRef = useRef<HTMLDivElement | null>(null)
+  const isLoggedMember = Boolean(user && token)
 
   const [voucherCode, setVoucherCode] = useState('')
   const [isVoucherApplied, setIsVoucherApplied] = useState(false)
   const [voucherError, setVoucherError] = useState<string | null>(null)
   const [voucherDiscount, setVoucherDiscount] = useState(0)
   const [checkingVoucher, setCheckingVoucher] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'BANK' | 'MOMO'>('COD')
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'BANK'>('COD')
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
-  // Load cart từ localStorage, nếu trống thì fallback 2 sản phẩm gợi ý
+  // Load cart:
+  // - Member: ưu tiên backend `/api/carts`
+  // - Guest: không cho thao tác giỏ hàng -> luôn hiển thị giỏ trống
   useEffect(() => {
     const loadCart = async () => {
-      try {
-        const saved = localStorage.getItem(CART_STORAGE_KEY)
-        if (saved) {
-          const parsed: CartItem[] = JSON.parse(saved)
-          setCartItems(parsed)
+      // Member -> backend
+      if (isLoggedMember) {
+        try {
+          const backendItems = await getCartApi(token, refreshToken)
+          setCartItems(backendItems)
+          return
+        } catch (err) {
+          console.error('CartPage: load cart from backend failed', err)
+          setCartItems([])
           return
         }
-      } catch {
-        // ignore parse error và fallback sang suggested
       }
-      try {
-        const data = await getProductsApi()
-        const firstTwo = (data ?? []).slice(0, 2)
-        const initial = firstTwo.map((p: any) => ({
-          id: p._id,
-          name: p.name,
-          category: p.category,
-          price: p.price ?? 0,
-          quantity: 1,
-          image: p.image,
-        }))
-        setCartItems(initial)
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(initial))
-      } catch {
-        setCartItems([])
-      }
+
+      setCartItems([])
     }
+
     void loadCart()
-  }, [])
+  }, [isLoggedMember, token, refreshToken])
 
-  // Mỗi khi cart thay đổi thì lưu lại vào localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
-    } catch {
-      // ignore storage error
+  const updateQuantity = async (id: string, change: number) => {
+    if (!isLoggedMember) {
+      navigate('/login', { state: { from: { pathname: '/cart' } } })
+      return
     }
-  }, [cartItems])
 
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item,
-      ),
-    )
+    const current = cartItems.find((i) => i.id === id)
+    if (!current) return
+
+    const nextQuantity = Math.max(1, current.quantity + change)
+    try {
+      setCheckoutError(null)
+      await updateCartQuantityApi(token, refreshToken, { product_id: id, quantity: nextQuantity })
+      const backendItems = await getCartApi(token, refreshToken)
+      setCartItems(backendItems)
+    } catch (err: any) {
+      setCheckoutError(err.message ?? 'Không thể cập nhật số lượng')
+    }
   }
 
-  const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id))
+  const removeItem = async (id: string) => {
+    if (!isLoggedMember) {
+      navigate('/login', { state: { from: { pathname: '/cart' } } })
+      return
+    }
+
+    try {
+      setCheckoutError(null)
+      await removeCartItemApi(token, refreshToken, id)
+      const backendItems = await getCartApi(token, refreshToken)
+      setCartItems(backendItems)
+    } catch (err: any) {
+      setCheckoutError(err.message ?? 'Không thể xóa sản phẩm khỏi giỏ')
+    }
   }
 
   const applyVoucher = () => {
@@ -103,8 +108,9 @@ const CartPage = () => {
   const total = Math.max(0, subtotal - discount)
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString('vi-VN') + 'đ';
-  };
+    if (!price || price <= 0) return 'Chưa có giá'
+    return price.toLocaleString('vi-VN') + 'đ'
+  }
 
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
 
@@ -119,6 +125,36 @@ const CartPage = () => {
     }
     void load()
   }, [])
+
+  const quickBuy = async (product: any) => {
+    const item: CartItem = {
+      id: product._id,
+      name: product.name,
+      category: product.category ?? '',
+      price: product.price ?? 0,
+      quantity: 1,
+      image: product.image ?? '',
+    }
+
+    if (isLoggedMember) {
+      try {
+        const backendItems = await replaceCartWithSingleItemApi(token, refreshToken, {
+          product_id: item.id,
+          quantity: 1,
+        })
+        setCartItems(backendItems)
+      } catch (err) {
+        console.error('CartPage: quickBuy backend failed', err)
+      }
+    } else {
+      navigate('/login', { state: { from: { pathname: '/cart' } } })
+      return
+    }
+
+    // Khi user bấm "Mua ngay" ở phần gợi ý phía dưới,
+    // tự cuộn lên khu "Tóm tắt đơn hàng" để tới trang thanh toán ngay.
+    orderSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 font-display min-h-screen flex flex-col overflow-x-hidden">
@@ -166,16 +202,22 @@ const CartPage = () => {
                     className="bg-white dark:bg-[#2d1b20] p-4 md:p-6 rounded-2xl border border-[#fce7ef] dark:border-[#3d262b] flex flex-col sm:flex-row items-center gap-6 group"
                   >
                     <div className="size-24 bg-background-light dark:bg-white/5 rounded-xl p-2 flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-contain"
-                      />
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name || item.id}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-text-muted">
+                          <span className="material-symbols-outlined">image_not_supported</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-grow flex flex-col gap-1">
                       <h3 className="font-bold text-lg text-text-main dark:text-white group-hover:text-primary transition-colors">
-                        {item.name}
+                        {item.name || item.id}
                       </h3>
                       <p className="text-sm text-text-muted">
                         Danh mục: {item.category}
@@ -230,7 +272,7 @@ const CartPage = () => {
 
           {/* Order Summary */}
           {cartItems.length > 0 && (
-            <div className="lg:col-span-4 sticky top-24">
+            <div className="lg:col-span-4 sticky top-24" ref={orderSummaryRef}>
               <div className="bg-white dark:bg-[#2d1b20] p-6 rounded-2xl border border-[#fce7ef] dark:border-[#3d262b] shadow-sm">
                 <h3 className="text-xl font-bold mb-6">Tóm tắt đơn hàng</h3>
 
@@ -335,16 +377,23 @@ const CartPage = () => {
                       />
                       Chuyển khoản ngân hàng
                     </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        value="MOMO"
-                        checked={paymentMethod === 'MOMO'}
-                        onChange={() => setPaymentMethod('MOMO')}
-                      />
-                      Thanh toán MoMo
-                    </label>
                   </div>
+
+                  {paymentMethod === 'BANK' && (
+                    <div className="mt-4 bg-[#fffafa] border border-[#fce7ef] rounded-2xl p-4 flex flex-col items-center gap-3">
+                      <p className="text-xs font-bold text-text-muted text-center">
+                        Quét mã QR để chuyển khoản
+                      </p>
+                      <img
+                        src={BANK_QR_IMAGE}
+                        alt="Mã QR chuyển khoản"
+                        className="w-full max-w-[320px] rounded-xl border border-[#fce7ef]"
+                      />
+                      <p className="text-[11px] text-text-muted text-center">
+                        Nội dung chuyển khoản/chi tiết ngân hàng có thể xem theo mã QR.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {checkoutError && (
@@ -369,28 +418,20 @@ const CartPage = () => {
                           product_id: i.id,
                           quantity: i.quantity,
                         })),
-                        address: {
-                          full_name: user.name,
-                          phone_number: '0123456789',
-                          street: 'Địa chỉ sẽ cập nhật sau',
-                          city: 'HCM',
-                        },
+                        // Backend yêu cầu `address` là string (không phải object)
+                        address: `${user.name} | 0123456789 | Địa chỉ sẽ cập nhật sau, HCM`,
                         voucher_code: isVoucherApplied ? voucherCode.trim() : undefined,
                       }
 
-                      const order = await createOrderApi(token, orderPayload)
+                      await createOrderApi(token, orderPayload)
 
-                      if (paymentMethod === 'MOMO') {
-                        const payment = await createMoMoPaymentApi(token, {
-                          order_id: order.order_id ?? order._id,
-                          amount: order.final_amount ?? total,
-                          return_url: `${window.location.origin}/payment-result`,
-                        })
-                        if (payment?.payUrl) {
-                          window.location.href = payment.payUrl
-                          return
-                        }
+                      // Sau khi tạo order thành công: clear cart (chỉ cần backend vì guest không thao tác giỏ)
+                      try {
+                        await clearCartApi(token, refreshToken)
+                      } catch (err) {
+                        console.error('CartPage: clear backend cart failed', err)
                       }
+                      setCartItems([])
 
                       navigate('/account/orders')
                     } catch (err: any) {
@@ -441,10 +482,13 @@ const CartPage = () => {
                     alt={product.name}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform"
                   />
-                  <button className="absolute bottom-3 right-3 size-10 bg-primary text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg">
-                    <span className="material-symbols-outlined">
-                      add_shopping_cart
-                    </span>
+                  <button
+                    type="button"
+                    onClick={() => quickBuy(product)}
+                    className="absolute bottom-3 right-3 size-10 bg-primary text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                    aria-label="Mua ngay"
+                  >
+                    <span className="material-symbols-outlined">add_shopping_cart</span>
                   </button>
                 </div>
                 <div className="p-4">

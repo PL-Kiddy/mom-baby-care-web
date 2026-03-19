@@ -4,28 +4,43 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useAuth } from '../../../shared/hooks/useAuth'
 import { getOrderByIdApi } from '../services/orderService'
+import { getProductByIdApi } from '../services/shopService'
 
 interface OrderItem {
   product_id: string
-  product_name: string
   quantity: number
-  price: number
+  // Backend lưu `price_at_purchase`, FE cần map từ trường này
+  price_at_purchase?: number
+  // Nếu backend populate thêm thì FE mới nhận được
+  product_name?: string
+  // fallback cho trường cũ (nếu có)
+  price?: number
 }
 
 interface OrderDetail {
   _id: string
   total_amount: number
-  status: 'pending' | 'processing' | 'completed' | 'cancelled'
-  payment_method: string
+  status: string
+  payment_method?: string
   created_at: string
   address?: any
   items?: OrderItem[]
+}
+
+function normalizeOrderStatus(status: string | undefined | null): 'pending' | 'processing' | 'completed' | 'cancelled' {
+  const s = (status ?? '').toLowerCase()
+  if (s === 'pending') return 'pending'
+  if (s === 'processing' || s === 'delivering') return 'processing'
+  if (s === 'completed' || s === 'delivered') return 'completed'
+  if (s === 'cancelled' || s === 'canceled') return 'cancelled'
+  return 'pending'
 }
 
 export default function AccountOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const { token } = useAuth()
   const [order, setOrder] = useState<OrderDetail | null>(null)
+  const [productNameById, setProductNameById] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,6 +61,45 @@ export default function AccountOrderDetailPage() {
     }
     void fetchOrder()
   }, [token, orderId])
+
+  // Vì backend không populate product_name khi lấy order,
+  // FE sẽ fetch thêm tên sản phẩm dựa trên product_id.
+  useEffect(() => {
+    const loadProductNames = async () => {
+      if (!order?.items?.length) return
+
+      const ids = order.items
+        .map((i) => i.product_id)
+        .filter((id): id is string => Boolean(id))
+
+      if (ids.length === 0) return
+
+      const uniqueIds = Array.from(new Set(ids))
+
+      try {
+        const settled = await Promise.allSettled(
+          uniqueIds.map(async (id) => {
+            const p = await getProductByIdApi(id)
+            return [id, p?.name ?? ''] as const
+          }),
+        )
+
+        const next: Record<string, string> = {}
+        for (const r of settled) {
+          if (r.status === 'fulfilled') {
+            const [id, name] = r.value
+            if (name) next[id] = name
+          }
+        }
+        setProductNameById(next)
+      } catch {
+        // nếu fail thì fallback product_id
+        setProductNameById({})
+      }
+    }
+
+    void loadProductNames()
+  }, [order])
 
   return (
     <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col overflow-x-hidden">
@@ -83,19 +137,23 @@ export default function AccountOrderDetailPage() {
                   #{order._id.slice(-8)}
                 </div>
                 <div className="text-xs text-text-muted mt-1">
-                  {new Date(order.created_at).toLocaleString('vi-VN')} • {order.payment_method}
+                  {new Date(order.created_at).toLocaleString('vi-VN')} •{' '}
+                  {order.payment_method ?? 'Chưa có thông tin thanh toán'}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-text-muted mb-1">Trạng thái</div>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#fff0f4] text-primary uppercase">
-                  {order.status === 'completed'
-                    ? 'Hoàn thành'
-                    : order.status === 'processing'
-                      ? 'Đang xử lý'
-                      : order.status === 'pending'
-                        ? 'Đang chờ'
-                        : 'Đã hủy'}
+                  {(() => {
+                    const ns = normalizeOrderStatus(order.status)
+                    return ns === 'completed'
+                      ? 'Hoàn thành'
+                      : ns === 'processing'
+                        ? 'Đang xử lý'
+                        : ns === 'pending'
+                          ? 'Đang chờ'
+                          : 'Đã hủy'
+                  })()}
                 </span>
               </div>
             </div>
@@ -113,7 +171,9 @@ export default function AccountOrderDetailPage() {
                     >
                       <div>
                         <div className="font-semibold text-text-main">
-                          {item.product_name ?? 'Sản phẩm'}
+                          {productNameById[item.product_id] ??
+                            item.product_name ??
+                            (item.product_id ? `#${item.product_id.slice(-6)}` : 'Sản phẩm')}
                         </div>
                         <div className="text-xs text-text-muted">
                           SL: {item.quantity}
@@ -121,10 +181,13 @@ export default function AccountOrderDetailPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-text-main">
-                          {(item.price * item.quantity).toLocaleString('vi-VN')}đ
+                          {(
+                            (item.price_at_purchase ?? item.price ?? 0) * item.quantity
+                          ).toLocaleString('vi-VN')}
+                          đ
                         </div>
                         <div className="text-xs text-text-muted">
-                          {item.price.toLocaleString('vi-VN')}đ / sản phẩm
+                          {(item.price_at_purchase ?? item.price ?? 0).toLocaleString('vi-VN')}đ / sản phẩm
                         </div>
                       </div>
                     </div>
@@ -142,10 +205,13 @@ export default function AccountOrderDetailPage() {
                 <div className="font-bold text-text-main mb-1">
                   Địa chỉ giao hàng
                 </div>
-                {order.address ? (
+                {typeof order.address === 'string' ? (
+                  <p>{order.address}</p>
+                ) : order.address ? (
                   <p>
-                    {order.address.street}, {order.address.ward},{' '}
-                    {order.address.district}, {order.address.city}
+                    {order.address.street ?? ''}{order.address.ward ? `, ${order.address.ward}` : ''}{' '}
+                    {order.address.district ? `, ${order.address.district}` : ''}{' '}
+                    {order.address.city ? `, ${order.address.city}` : ''}
                   </p>
                 ) : (
                   <p>Địa chỉ không khả dụng.</p>

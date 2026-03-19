@@ -6,6 +6,19 @@ function authHeaders(token: string) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
 }
 
+function decodeJwtPayload(token: string): any | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    const payloadBase64Url = parts[1]
+    const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const json = atob(payloadBase64)
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 const ROLE_MAP: Record<number, 'admin' | 'staff' | 'member'> = {
   1: 'member',
   2: 'staff',
@@ -141,7 +154,20 @@ export async function refreshAccessTokenApi(refreshToken: string): Promise<strin
     if (!res.ok) {
       throw new Error(json.message ?? 'Không thể làm mới phiên đăng nhập')
     }
-    return json.result?.access_token ?? null
+
+    const accessToken = json.result?.access_token as string | undefined
+    if (!accessToken) return null
+
+    // Backend middleware yêu cầu member phải có claim `verify = UserVerifyStatus.Verified (1)`
+    // Token refresh hiện tại chỉ set `user_id`, nên nếu thiếu claim `verify` => member sẽ bị 403 khi mua hàng.
+    const payload = decodeJwtPayload(accessToken)
+    const userRole = payload?.user_role != null ? Number(payload.user_role) : undefined
+    const verify = payload?.verify != null ? Number(payload.verify) : undefined
+    if (userRole === 1 && verify !== 1) {
+      return null
+    }
+
+    return accessToken
   } catch {
     return null
   }
