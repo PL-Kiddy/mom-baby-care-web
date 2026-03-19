@@ -14,6 +14,8 @@ import MemberReportPage from './features/shop/pages/MemberReportPage'
 import CustomerRegisterPage from './features/shop/pages/CustomerRegisterPage'
 import CustomerForgotPasswordPage from './features/shop/pages/CustomerForgotPasswordPage'
 import ResetPasswordPage from './features/shop/pages/ResetPasswordPage'
+import VerifyEmailPage from './features/shop/pages/VerifyEmailPage'
+import AfterRegisterVerifyNoticePage from './features/shop/pages/AfterRegisterVerifyNoticePage'
 import CartPage from './features/shop/pages/CartPage'
 
 // Admin/Staff auth + layouts
@@ -50,6 +52,8 @@ export default function App() {
       <Route path="/forgot-password" element={<CustomerForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/members/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/after-register-verify" element={<AfterRegisterVerifyNoticePage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
