@@ -1,8 +1,12 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-import { MOCK_SHOP_PRODUCTS } from '../data/mockShopData'
+import { getProductsApi } from '../services/shopService'
+import { checkVoucherApi } from '../services/memberService'
+import { useAuth } from '../../../shared/hooks/useAuth'
+import { createOrderApi } from '../services/orderService'
+import { createMoMoPaymentApi } from '../services/paymentService'
 
 interface CartItem {
   id: string
@@ -13,34 +17,77 @@ interface CartItem {
   image: string
 }
 
-const CartPage = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(
-    MOCK_SHOP_PRODUCTS.slice(0, 2).map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      price: Number(p.price.replace(/[^\d]/g, '')) || 0,
-      quantity: 1,
-      image: p.image,
-    })),
-  );
+const CART_STORAGE_KEY = 'milkcare_cart_items'
 
-  const [voucherCode, setVoucherCode] = useState('MOM20');
-  const [isVoucherApplied, setIsVoucherApplied] = useState(true);
+const CartPage = () => {
+  const navigate = useNavigate()
+  const { user, token, refreshToken } = useAuth()
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+
+  const [voucherCode, setVoucherCode] = useState('')
+  const [isVoucherApplied, setIsVoucherApplied] = useState(false)
+  const [voucherError, setVoucherError] = useState<string | null>(null)
+  const [voucherDiscount, setVoucherDiscount] = useState(0)
+  const [checkingVoucher, setCheckingVoucher] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'BANK' | 'MOMO'>('COD')
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+
+  // Load cart từ localStorage, nếu trống thì fallback 2 sản phẩm gợi ý
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const saved = localStorage.getItem(CART_STORAGE_KEY)
+        if (saved) {
+          const parsed: CartItem[] = JSON.parse(saved)
+          setCartItems(parsed)
+          return
+        }
+      } catch {
+        // ignore parse error và fallback sang suggested
+      }
+      try {
+        const data = await getProductsApi()
+        const firstTwo = (data ?? []).slice(0, 2)
+        const initial = firstTwo.map((p: any) => ({
+          id: p._id,
+          name: p.name,
+          category: p.category,
+          price: p.price ?? 0,
+          quantity: 1,
+          image: p.image,
+        }))
+        setCartItems(initial)
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(initial))
+      } catch {
+        setCartItems([])
+      }
+    }
+    void loadCart()
+  }, [])
+
+  // Mỗi khi cart thay đổi thì lưu lại vào localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+    } catch {
+      // ignore storage error
+    }
+  }, [cartItems])
 
   const updateQuantity = (id: string, change: number) => {
-    setCartItems(
-      cartItems.map((item) =>
+    setCartItems((prev) =>
+      prev.map((item) =>
         item.id === id
           ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  };
+          : item,
+      ),
+    )
+  }
 
   const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
+    setCartItems((prev) => prev.filter((item) => item.id !== id))
+  }
 
   const applyVoucher = () => {
     if (voucherCode.trim()) {
@@ -52,14 +99,26 @@ const CartPage = () => {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const discount = isVoucherApplied ? subtotal * 0.2 : 0;
-  const total = subtotal - discount;
+  const discount = isVoucherApplied ? voucherDiscount : 0
+  const total = Math.max(0, subtotal - discount)
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('vi-VN') + 'đ';
   };
 
-  const suggestedProducts = MOCK_SHOP_PRODUCTS;
+  const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getProductsApi()
+        setSuggestedProducts(data.slice(0, 4))
+      } catch {
+        setSuggestedProducts([])
+      }
+    }
+    void load()
+  }, [])
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 font-display min-h-screen flex flex-col overflow-x-hidden">
@@ -201,15 +260,39 @@ const CartPage = () => {
                         className="flex-1 bg-[#fff0f4] dark:bg-white/5 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-primary placeholder:text-primary/50 focus:ring-2 focus:ring-primary/50"
                       />
                       <button
-                        onClick={applyVoucher}
-                        className="bg-primary/20 text-primary font-bold px-4 rounded-xl hover:bg-primary hover:text-white transition-all text-sm"
+                        type="button"
+                        onClick={async () => {
+                          if (!voucherCode.trim()) return
+                          setVoucherError(null)
+                          setCheckingVoucher(true)
+                          try {
+                            const result = await checkVoucherApi(token, refreshToken, {
+                              code: voucherCode.trim(),
+                              orderTotal: subtotal,
+                            })
+                            const discountValue = result?.discount_amount ?? 0
+                            setVoucherDiscount(discountValue)
+                            setIsVoucherApplied(true)
+                          } catch (err: any) {
+                            setIsVoucherApplied(false)
+                            setVoucherDiscount(0)
+                            setVoucherError(err.message ?? 'Mã giảm giá không hợp lệ')
+                          } finally {
+                            setCheckingVoucher(false)
+                          }
+                        }}
+                        disabled={checkingVoucher || subtotal <= 0}
+                        className="bg-primary/20 text-primary font-bold px-4 rounded-xl hover:bg-primary hover:text-white transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        Áp dụng
+                        {checkingVoucher ? 'Đang kiểm tra...' : 'Áp dụng'}
                       </button>
                     </div>
+                    {voucherError && (
+                      <p className="text-xs text-red-500 mt-1">{voucherError}</p>
+                    )}
                     {isVoucherApplied && (
                       <p className="text-[10px] text-primary font-bold mt-1 uppercase tracking-wider">
-                        Đã áp dụng mã giảm giá 20%
+                        Đã áp dụng mã giảm giá
                       </p>
                     )}
                   </div>
@@ -222,7 +305,7 @@ const CartPage = () => {
                   )}
                 </div>
 
-                <div className="pt-6 border-t-2 border-dashed border-[#fce7ef] dark:border-[#3d262b] mb-8">
+                <div className="pt-6 border-t-2 border-dashed border-[#fce7ef] dark:border-[#3d262b] mb-6">
                   <div className="flex justify-between items-end">
                     <span className="text-lg font-bold">Tổng cộng</span>
                     <span className="text-2xl font-black text-primary">
@@ -231,8 +314,93 @@ const CartPage = () => {
                   </div>
                 </div>
 
-                <button className="w-full bg-primary-dark hover:bg-primary-dark/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
-                  Tiến hành thanh toán
+                <div className="mb-4">
+                  <p className="text-sm font-bold mb-2">Phương thức thanh toán</p>
+                  <div className="space-y-2 text-sm">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="COD"
+                        checked={paymentMethod === 'COD'}
+                        onChange={() => setPaymentMethod('COD')}
+                      />
+                      Thanh toán khi nhận hàng (COD)
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="BANK"
+                        checked={paymentMethod === 'BANK'}
+                        onChange={() => setPaymentMethod('BANK')}
+                      />
+                      Chuyển khoản ngân hàng
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="MOMO"
+                        checked={paymentMethod === 'MOMO'}
+                        onChange={() => setPaymentMethod('MOMO')}
+                      />
+                      Thanh toán MoMo
+                    </label>
+                  </div>
+                </div>
+
+                {checkoutError && (
+                  <p className="text-xs text-red-500 mb-3">{checkoutError}</p>
+                )}
+
+                <button
+                  className="w-full bg-primary-dark hover:bg-primary-dark/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={cartItems.length === 0 || isPlacingOrder}
+                  onClick={async () => {
+                    if (!user || !token) {
+                      navigate('/login', { state: { from: { pathname: '/cart' } } })
+                      return
+                    }
+                    if (cartItems.length === 0) return
+
+                    setCheckoutError(null)
+                    setIsPlacingOrder(true)
+                    try {
+                      const orderPayload = {
+                        items: cartItems.map((i) => ({
+                          product_id: i.id,
+                          quantity: i.quantity,
+                        })),
+                        address: {
+                          full_name: user.name,
+                          phone_number: '0123456789',
+                          street: 'Địa chỉ sẽ cập nhật sau',
+                          city: 'HCM',
+                        },
+                        voucher_code: isVoucherApplied ? voucherCode.trim() : undefined,
+                      }
+
+                      const order = await createOrderApi(token, orderPayload)
+
+                      if (paymentMethod === 'MOMO') {
+                        const payment = await createMoMoPaymentApi(token, {
+                          order_id: order.order_id ?? order._id,
+                          amount: order.final_amount ?? total,
+                          return_url: `${window.location.origin}/payment-result`,
+                        })
+                        if (payment?.payUrl) {
+                          window.location.href = payment.payUrl
+                          return
+                        }
+                      }
+
+                      navigate('/account/orders')
+                    } catch (err: any) {
+                      setCheckoutError(err.message ?? 'Không thể thanh toán, vui lòng thử lại.')
+                    } finally {
+                      setIsPlacingOrder(false)
+                    }
+                  }}
+                >
+                  {isPlacingOrder ? 'Đang xử lý...' : 'Tiến hành thanh toán'}
                   <span className="material-symbols-outlined">payments</span>
                 </button>
 
@@ -264,7 +432,7 @@ const CartPage = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {suggestedProducts.map((product) => (
               <div
-                key={product.id}
+                key={product._id}
                 className="group bg-white dark:bg-[#2d1b20] rounded-2xl overflow-hidden border border-[#fce7ef] dark:border-[#3d262b] hover:shadow-xl transition-all"
               >
                 <div className="relative aspect-square p-4 flex items-center justify-center bg-[#fffafa] dark:bg-white/5">
