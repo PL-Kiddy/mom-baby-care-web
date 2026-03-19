@@ -25,22 +25,6 @@ export default function Topbar({ title, extra }: TopbarProps) {
       <div className="flex items-center gap-2.5">
         {extra}
 
-        <button
-          type="button"
-          className="
-            flex min-w-[180px] items-center gap-2
-            rounded-lg border border-[var(--border)]
-            bg-[var(--surface2)]
-            px-[14px] py-[7px]
-            text-[13px] text-[var(--muted)]
-            transition-colors
-            hover:border-[var(--accent)]
-          "
-        >
-          <IconSearch size={14} color="var(--muted)" />
-          <span>Tìm kiếm...</span>
-        </button>
-
         <div
           className="
             flex items-center gap-1.5

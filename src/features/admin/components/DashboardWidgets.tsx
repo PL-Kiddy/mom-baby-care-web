@@ -4,32 +4,37 @@ import {
   IconProduct, IconVoucher, IconPost, IconChart, IconEye, IconWarning,
 } from '../../../shared/components/Icons'
 
-type IconComponent = (props: IconProps) => JSX.Element
+import { useNavigate } from 'react-router-dom'
+type CustomIcon = (props: IconProps) => JSX.Element
 
 // ─── Quick Actions ────────────────────────────────────────────────────────────
 interface Action {
-  Icon: IconComponent
+  Icon: CustomIcon
   label: string
   color: string
+  path: string
 }
 
 const ACTIONS: Action[] = [
-  { Icon: IconProduct, label: 'Thêm sản phẩm mới', color: 'blue' },
-  { Icon: IconVoucher, label: 'Tạo voucher mới',    color: 'purple' },
-  { Icon: IconPost,    label: 'Đăng bài viết',      color: 'teal' },
-  { Icon: IconChart,   label: 'Xuất báo cáo',       color: 'gold' },
+  { Icon: IconProduct, label: 'Thêm sản phẩm mới', color: 'blue', path: '/admin/products' },
+  { Icon: IconVoucher, label: 'Tạo voucher mới',    color: 'purple', path: '/admin/vouchers' },
+  { Icon: IconPost,    label: 'Đăng bài viết',      color: 'teal', path: '/admin/posts' },
+  { Icon: IconChart,   label: 'Xuất báo cáo',       color: 'gold', path: '/admin/revenue' },
 ]
 
 export function QuickActions() {
+  const navigate = useNavigate()
+
   return (
     <div className="card">
       <div className="card-header">
         <span className="card-title">Thao tác nhanh</span>
       </div>
       <div className="flex flex-col gap-1.5">
-        {ACTIONS.map(({ Icon, label, color }) => (
+        {ACTIONS.map(({ Icon, label, color, path }) => (
           <button
             key={label}
+            onClick={() => navigate(path)}
             className="
               flex items-center gap-3 rounded-[9px]
               border border-[var(--border)] bg-[var(--surface2)]
@@ -117,7 +122,7 @@ export function TopProducts({ data }: { data?: any[] }) {
 
 // ─── Activity Feed ────────────────────────────────────────────────────────────
 interface Activity {
-  Icon: IconComponent
+  Icon: CustomIcon
   bg: string
   iconColor: string
   text: ReactNode

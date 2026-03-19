@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { IconWarning, IconPlus, IconArrowUp, IconSearch, IconRefresh } from '../../../shared/components/Icons'
 import { useAuth } from '../../../shared/hooks/useAuth'
-import { getProductsApi } from '../../admin/services/adminService'
+import { getProductsApi, updateProductApi } from '../../admin/services/adminService'
+import Modal from '../../../shared/components/Modal'
 import type { Product } from '../../../shared/types'
 
 function StockBar({ stock, min = 10 }: { stock: number; min?: number }) {
@@ -24,6 +25,16 @@ export default function InventoryPage() {
   const [filter, setFilter] = useState<'all' | 'low' | 'out'>('all')
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Modal states
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Form states
+  const [importForm, setImportForm] = useState({ name: '', quantity: '', note: '' })
+  const [editForm, setEditForm] = useState({ name: '', price: '', stock: '', category: '' })
 
   const loadProducts = async () => {
     if (!token) return
@@ -39,6 +50,49 @@ export default function InventoryPage() {
   }
 
   useEffect(() => { loadProducts() }, [token])
+
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setTimeout(() => {
+      alert(`Đã gửi yêu cầu nhập ${importForm.quantity} chiếc [${importForm.name}] vào kho. Vui lòng chờ quản lý duyệt!`)
+      setIsImportModalOpen(false)
+      setImportForm({ name: '', quantity: '', note: '' })
+      setSubmitting(false)
+    }, 800)
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!token || !selectedProduct) return
+    setSubmitting(true)
+    try {
+      // For demo, we update the stock/price via the existing admin API if possible
+      await updateProductApi(token, selectedProduct._id, {
+        name: editForm.name,
+        price: Number(editForm.price),
+        stock_quantity: Number(editForm.stock)
+      })
+      alert('Cập nhật thông tin kho hàng thành công!')
+      setIsEditModalOpen(false)
+      loadProducts()
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi cập nhật sản phẩm')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const openEdit = (p: Product) => {
+    setSelectedProduct(p)
+    setEditForm({
+      name: p.name,
+      price: String(p.price),
+      stock: String(p.stock),
+      category: typeof p.category === 'object' ? p.category.name : 'Sữa'
+    })
+    setIsEditModalOpen(true)
+  }
 
   const lowStockThreshold = 10
   const lowStock = products.filter((i) => i.stock > 0 && i.stock <= lowStockThreshold).length
@@ -109,7 +163,10 @@ export default function InventoryPage() {
             <IconRefresh size={18} />
           </button>
         </div>
-        <button className="btn btn-primary h-10 px-6">
+        <button 
+          className="btn btn-primary h-10 px-6"
+          onClick={() => setIsImportModalOpen(true)}
+        >
           <IconPlus size={16} /> Nhập hàng
         </button>
       </div>
@@ -182,9 +239,12 @@ export default function InventoryPage() {
                     </td>
                     <td className="text-right">
                       <div className="flex justify-end gap-2">
-                        <button className="text-[12px] font-bold text-[var(--accent)] hover:opacity-80">Nhập kho</button>
-                        <span className="text-[12px] text-[var(--border)]">|</span>
-                        <button className="text-[12px] font-bold text-[var(--accent)] hover:opacity-80">Sửa</button>
+                        <button 
+                          className="text-[12px] font-bold text-[var(--accent)] hover:underline"
+                          onClick={() => openEdit(item)}
+                        >
+                          Cập nhật / Sửa
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -194,6 +254,99 @@ export default function InventoryPage() {
           </table>
         </div>
       </div>
+
+      {/* Import Modal */}
+      <Modal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        title="Yêu Cầu Nhập Hàng Mới"
+      >
+        <form onSubmit={handleImportSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[13px] font-bold text-text-main mb-1.5">Tên sản phẩm cần nhập</label>
+            <input 
+              required className="input w-full" 
+              placeholder="VD: Sữa Similac số 1..." 
+              value={importForm.name}
+              onChange={e => setImportForm({...importForm, name: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-text-main mb-1.5">Số lượng dự kiến</label>
+            <input 
+              required type="number" className="input w-full" 
+              placeholder="VD: 50" 
+              value={importForm.quantity}
+              onChange={e => setImportForm({...importForm, quantity: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className="block text-[13px] font-bold text-text-main mb-1.5">Ghi chú thêm</label>
+            <textarea 
+              className="input w-full min-h-[80px] py-2" 
+              placeholder="Ghi chú cho quản lý..." 
+              value={importForm.note}
+              onChange={e => setImportForm({...importForm, note: e.target.value})}
+            />
+          </div>
+          <div className="pt-2 flex gap-3">
+            <button type="button" className="btn btn-secondary flex-1" onClick={() => setIsImportModalOpen(false)}>Hủy</button>
+            <button type="submit" className="btn btn-primary flex-1" disabled={submitting}>
+              {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Modal (used for both Stock-in and Edit) */}
+      <Modal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        title="Cập Nhật Tồn Kho & Thông Tin"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div className="p-3 bg-[var(--surface2)] rounded-lg border border-[var(--border)] mb-2">
+             <div className="text-[11px] uppercase tracking-wider font-bold text-[var(--muted)] mb-1">Đang chỉnh sửa</div>
+             <div className="text-[14px] font-bold text-text-main">{editForm.name}</div>
+             <div className="text-[11px] text-[var(--accent)] font-medium">Danh mục: {editForm.category}</div>
+          </div>
+          
+          <div>
+            <label className="block text-[13px] font-bold text-text-main mb-1.5">Tên hiển thị</label>
+            <input 
+              required className="input w-full" 
+              value={editForm.name}
+              onChange={e => setEditForm({...editForm, name: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[13px] font-bold text-text-main mb-1.5">Giá bán (₫)</label>
+              <input 
+                required type="number" className="input w-full" 
+                value={editForm.price}
+                onChange={e => setEditForm({...editForm, price: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-[13px] font-bold text-text-main mb-1.5">Tồn kho hiện tại</label>
+              <input 
+                required type="number" className="input w-full" 
+                value={editForm.stock}
+                onChange={e => setEditForm({...editForm, stock: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex gap-3">
+            <button type="button" className="btn btn-secondary flex-1" onClick={() => setIsEditModalOpen(false)}>Hủy</button>
+            <button type="submit" className="btn btn-primary flex-1" disabled={submitting}>
+              {submitting ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

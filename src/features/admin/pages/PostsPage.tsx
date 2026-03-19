@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { IconPlus, IconEye, IconRefresh, IconSearch } from '../../../shared/components/Icons'
 import { useAuth } from '../../../shared/hooks/useAuth'
-import { createPostApi } from '../services/adminService'
+import { createPostApi, deletePostApi, updatePostApi } from '../services/adminService'
 import Modal from '../../../shared/components/Modal'
+import { exportToCSV } from '../../../shared/utils/exportUtils'
+import { IconDownload } from '../../../shared/components/Icons'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 
@@ -12,6 +14,7 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,31 +47,81 @@ export default function PostsPage() {
     if (!token) return
     setSubmitting(true)
     try {
-      await createPostApi(token, {
+      const payload = {
         ...formData,
         suggested_products: formData.suggested_products.split(',').map(s => s.trim()).filter(Boolean),
         tags: formData.tags.split(',').map(s => s.trim()).filter(Boolean),
-      })
+      }
+
+      if (editingId) {
+        await updatePostApi(token, editingId, payload)
+        alert('Cập nhật bài viết thành công!')
+      } else {
+        await createPostApi(token, payload)
+        alert('Đăng bài viết thành công!')
+      }
+
       setIsModalOpen(false)
       loadPosts()
-      setFormData({
-        title: '',
-        content: '',
-        thumbnail: '',
-        suggested_products: '',
-        tags: '',
-        status: 'published',
-      })
+      resetForm()
     } catch (err: any) {
-      alert(err.message || 'Lỗi khi tạo bài viết')
+      alert(err.message || 'Lỗi khi xử lý bài viết')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
+    setEditingId(null)
+    setFormData({
+      title: '',
+      content: '',
+      thumbnail: '',
+      suggested_products: '',
+      tags: '',
+      status: 'published',
+    })
+  }
+
+  const handleEdit = (post: any) => {
+    setEditingId(post._id)
+    setFormData({
+      title: post.title || '',
+      content: post.content || '',
+      thumbnail: post.thumbnail || '',
+      suggested_products: post.suggested_products?.join(', ') || '',
+      tags: post.tags?.join(', ') || '',
+      status: post.status || 'published',
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) return
+
+    try {
+      await deletePostApi(token, id)
+      alert('Xóa bài viết thành công!')
+      loadPosts()
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi xóa bài viết')
     }
   }
 
   const filtered = posts.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   )
+
+  const handleExport = () => {
+    const headers = [
+      { key: 'title', label: 'Tiêu đề' },
+      { key: 'view', label: 'Lượt xem' },
+      { key: 'status', label: 'Trạng thái' },
+      { key: 'created_at', label: 'Ngày đăng' },
+    ]
+    exportToCSV(filtered, headers, 'Danh_sach_bai_viet')
+  }
 
   return (
     <div>
@@ -97,8 +150,14 @@ export default function PostsPage() {
         <button className="btn btn-secondary" onClick={loadPosts} disabled={loading}>
           <IconRefresh size={14} className={loading ? 'animate-spin' : ''} />
         </button>
-        <div style={{ marginLeft: 'auto' }}>
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport} disabled={loading || filtered.length === 0}>
+            <IconDownload size={14} /> Xuất Excel
+          </button>
+          <button className="btn btn-primary" onClick={() => {
+            resetForm()
+            setIsModalOpen(true)
+          }}>
             <IconPlus size={14} /> Tạo bài viết
           </button>
         </div>
@@ -147,7 +206,16 @@ export default function PostsPage() {
                       </span>
                     </td>
                     <td>
-                      <button className="text-xs text-primary hover:underline">Sửa</button>
+                      <span className="cursor-pointer text-[12px] text-primary hover:underline font-bold" onClick={() => handleEdit(p)}>
+                        Sửa
+                      </span>
+                      {' · '}
+                      <span 
+                        className="cursor-pointer text-[12px] text-primary hover:underline font-bold"
+                        onClick={() => handleDelete(p._id)}
+                      >
+                        Xóa
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -160,7 +228,7 @@ export default function PostsPage() {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Đăng Bài Viết Mới"
+        title={editingId ? "Cập Nhật Bài Viết" : "Đăng Bài Viết Mới"}
       >
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
@@ -230,7 +298,7 @@ export default function PostsPage() {
               type="submit" className="btn btn-primary flex-1" 
               disabled={submitting}
             >
-              {submitting ? 'Đang đăng...' : 'Đăng bài'}
+              {submitting ? 'Đang xử lý...' : (editingId ? 'Cập nhật' : 'Đăng bài')}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { IconPlus, IconRefresh, IconSearch, IconTag, IconClock } from '../../../shared/components/Icons'
 import { useAuth } from '../../../shared/hooks/useAuth'
-import { getVouchersApi, createVoucherApi } from '../services/staffService'
+import { getVouchersApi, createVoucherApi, updateVoucherApi } from '../services/staffService'
 import Modal from '../../../shared/components/Modal'
 import type { Voucher } from '../../../shared/types'
 
@@ -22,6 +22,7 @@ export default function StaffVouchersPage() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState(EMPTY_FORM)
 
   const loadVouchers = async () => {
@@ -39,27 +40,55 @@ export default function StaffVouchersPage() {
 
   useEffect(() => { loadVouchers() }, [token])
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token) return
     setSubmitting(true)
     try {
-      await createVoucherApi(token, {
+      const payload = {
         ...formData,
         discount_value: Number(formData.discount_value),
         min_order_value: Number(formData.min_order_value) || 0,
         usage_limit: Number(formData.usage_limit),
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
-      })
+      }
+
+      if (editingId) {
+        await updateVoucherApi(token, editingId, payload)
+        alert('Cập nhật voucher thành công!')
+      } else {
+        await createVoucherApi(token, payload)
+        alert('Tạo voucher thành công!')
+      }
+      
       setIsModalOpen(false)
       loadVouchers()
-      setFormData(EMPTY_FORM)
+      resetForm()
     } catch (err: any) {
-      alert(err.message || 'Lỗi khi tạo voucher')
+      alert(err.message || 'Lỗi khi xử lý voucher')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const resetForm = () => {
+    setEditingId(null)
+    setFormData(EMPTY_FORM)
+  }
+
+  const handleEdit = (v: any) => {
+    setEditingId(v._id)
+    setFormData({
+      code: v.code,
+      discount_type: v.discount_type,
+      discount_value: String(v.discount_value),
+      min_order_value: String(v.min_order_value),
+      start_date: v.start_date ? new Date(v.start_date).toISOString().split('T')[0] : '',
+      end_date: v.end_date ? new Date(v.end_date).toISOString().split('T')[0] : '',
+      usage_limit: String(v.usage_limit),
+    })
+    setIsModalOpen(true)
   }
 
   const filtered = vouchers.filter((v) =>
@@ -95,7 +124,7 @@ export default function StaffVouchersPage() {
             <IconRefresh size={18} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
-        <button className="btn btn-primary h-10 px-4" onClick={() => setIsModalOpen(true)}>
+        <button className="btn btn-primary h-10 px-4" onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <IconPlus size={16} /> <span className="hidden sm:inline">Tạo voucher mới</span>
         </button>
       </div>
@@ -168,7 +197,11 @@ export default function StaffVouchersPage() {
                       </span>
                     </td>
                     <td className="text-right">
-                      <button className="btn btn-secondary !p-1.5 !rounded-lg" title="Sửa voucher">
+                      <button 
+                        className="btn btn-secondary !p-1.5 !rounded-lg" 
+                        title="Sửa voucher"
+                        onClick={() => handleEdit(v)}
+                      >
                         <span className="text-[12px] font-medium">Sửa</span>
                       </button>
                     </td>
@@ -180,8 +213,8 @@ export default function StaffVouchersPage() {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Tạo Voucher Mới">
-        <form onSubmit={handleCreate} className="space-y-5 p-1">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập Nhật Voucher' : 'Tạo Voucher Mới'}>
+        <form onSubmit={handleSubmit} className="space-y-5 p-1">
           <div className="grid grid-cols-2 gap-5">
             <div className="col-span-2">
               <label className="block text-[13px] font-bold text-text-main mb-1.5">Mã Voucher</label>
@@ -256,7 +289,7 @@ export default function StaffVouchersPage() {
               type="submit" className="btn btn-primary h-11 flex-1 font-bold shadow-lg shadow-[rgba(var(--accent-rgb),0.2)]" 
               disabled={submitting}
             >
-              {submitting ? 'Đang tạo...' : 'Xác nhận tạo'}
+              {submitting ? 'Đang xử lý...' : editingId ? 'Cập Nhật' : 'Xác nhận tạo'}
             </button>
           </div>
         </form>

@@ -5,9 +5,10 @@ import { getReportsApi, updateReportStatusApi } from '../services/staffService'
 import type { ReportItem } from '../../../shared/types'
 
 const STATUS_MAP: Record<string, string> = {
-  'open': 'Chưa xử lý',
+  'pending': 'Chờ xử lý',
   'processing': 'Đang xử lý',
   'resolved': 'Đã giải quyết',
+  'rejected': 'Đã từ chối',
 }
 
 const PRIORITY_MAP: Record<string, string> = {
@@ -17,12 +18,13 @@ const PRIORITY_MAP: Record<string, string> = {
 }
 
 const TYPE_MAP: Record<string, string> = {
-  'complaint': 'Khiếu nại',
-  'return': 'Hoàn hàng',
-  'feedback': 'Phản hồi',
+  'comment': 'Bình luận',
+  'product': 'Sản phẩm',
+  'order': 'Đơn hàng',
+  'other': 'Khác',
 }
 
-const TABS = ['Tất cả', 'Chưa xử lý', 'Đang xử lý', 'Đã giải quyết'] as const
+const TABS = ['Tất cả', 'Chờ xử lý', 'Đang xử lý', 'Đã giải quyết'] as const
 
 export default function ReportsPage() {
   const { token } = useAuth()
@@ -36,7 +38,18 @@ export default function ReportsPage() {
     setLoading(true)
     try {
       const data = await getReportsApi(token)
-      setReports(data || [])
+      const mapped: ReportItem[] = data.map((item: any) => ({
+        id: item._id,
+        _id: item._id,
+        type: item.type,
+        customer: item.reporter?.name || 'Ẩn danh',
+        orderId: item.target_id || '-',
+        content: `${item.reason}${item.description ? `: ${item.description}` : ''}`,
+        status: item.status || 'pending',
+        priority: item.type === 'order' ? 'high' : 'medium', // Giả định priority dựa trên loại
+        createdAt: item.created_at,
+      }))
+      setReports(mapped)
     } catch (err) {
       console.error(err)
     } finally {
@@ -48,23 +61,27 @@ export default function ReportsPage() {
 
   const resolve = async (id: string) => {
     if (!token) return
+    if (!window.confirm('Bạn có chắc chắn muốn đánh dấu báo cáo này là "Đã giải quyết" không?')) return
     try {
       await updateReportStatusApi(token, id, 'resolved')
+      alert('Cập nhật trạng thái thành công!')
       loadReports()
     } catch (err: any) { alert(err.message) }
   }
 
   const process = async (id: string) => {
     if (!token) return
+    if (!window.confirm('Bạn có chắc chắn muốn tiếp nhận xử lý báo cáo này không?')) return
     try {
       await updateReportStatusApi(token, id, 'processing')
+      alert('Tiếp nhận báo cáo thành công!')
       loadReports()
     } catch (err: any) { alert(err.message) }
   }
 
   const filtered = reports.filter((r) => {
     const matchTab = tab === 0 || 
-      (tab === 1 && r.status === 'open') ||
+      (tab === 1 && r.status === 'pending') ||
       (tab === 2 && r.status === 'processing') ||
       (tab === 3 && r.status === 'resolved')
     const matchSearch = 
@@ -78,7 +95,7 @@ export default function ReportsPage() {
     <div>
       <div className="mb-5 grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Chưa xử lý',    value: reports.filter((r) => r.status === 'open').length, color: 'red' },
+          { label: 'Chờ xử lý',    value: reports.filter((r) => r.status === 'pending').length, color: 'red' },
           { label: 'Đang xử lý',    value: reports.filter((r) => r.status === 'processing').length, color: 'gold' },
           { label: 'Đã giải quyết', value: reports.filter((r) => r.status === 'resolved').length, color: 'green' },
           { label: 'Ưu tiên cao',   value: reports.filter((r) => r.priority === 'high').length, color: 'blue' },
@@ -206,7 +223,7 @@ export default function ReportsPage() {
                     </td>
                     <td>
                       <span
-                        className={`status-badge ${r.status === 'open' ? 'cancelled' : r.status === 'processing' ? 'pending' : 'completed'}`}
+                        className={`status-badge ${r.status === 'pending' ? 'cancelled' : r.status === 'processing' ? 'pending' : 'completed'}`}
                       >
                         {STATUS_MAP[r.status] || r.status}
                       </span>
@@ -216,10 +233,11 @@ export default function ReportsPage() {
                         <button
                           className="btn-icon p-2 hover:bg-[var(--surface2)] text-[var(--muted)] hover:text-[var(--accent)]"
                           title="Xem chi tiết"
+                          onClick={() => alert(`Đang tải chi tiết báo cáo [${r.id}]... Tính năng này sẽ sớm ra mắt!`)}
                         >
                           <IconEye size={16} />
                         </button>
-                        {r.status === 'open' && (
+                        {r.status === 'pending' && (
                           <button
                             className="btn-icon p-2 bg-[rgba(234,179,8,0.1)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-white"
                             onClick={() => process(r._id || r.id)}

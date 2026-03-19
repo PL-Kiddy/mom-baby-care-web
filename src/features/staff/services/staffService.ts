@@ -67,3 +67,14 @@ export async function createVoucherApi(token: string, data: any) {
   if (!res.ok) throw new Error(json.message ?? 'Không thể tạo voucher')
   return json.result
 }
+
+export async function updateVoucherApi(token: string, voucherId: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/vouchers/${voucherId}`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể cập nhật voucher')
+  return json.result
+}

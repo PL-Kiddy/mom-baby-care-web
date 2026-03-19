@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   IconDashboard, IconProduct, IconOrder, IconAccount,
@@ -13,7 +14,7 @@ const NAV: NavGroup[] = [
 
   { section: 'Quản lý', items: [
     { to: '/admin/products', Icon: IconProduct, label: 'Sản phẩm' },
-    { to: '/admin/orders',   Icon: IconOrder,   label: 'Đơn hàng', badge: 14 },
+    { to: '/admin/orders',   Icon: IconOrder,   label: 'Đơn hàng', badge: 0 },
     { to: '/admin/accounts', Icon: IconAccount, label: 'Tài khoản' },
     { to: '/admin/vouchers', Icon: IconVoucher, label: 'Voucher' },
     { to: '/admin/posts',    Icon: IconPost,    label: 'Bài viết' },
@@ -25,9 +26,37 @@ const NAV: NavGroup[] = [
 ]
 
 export default function Sidebar() {
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
   const navigate = useNavigate()
+  const [pendingOrders, setPendingOrders] = useState(0)
   const initials = user?.name.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase() ?? 'A'
+
+  useEffect(() => {
+    async function fetchCount() {
+      if (!token) return
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/orders/all`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const json = await res.json()
+        const count = (json.result || []).filter((o: any) => o.status?.toLowerCase() === 'pending').length
+        setPendingOrders(count)
+      } catch (err) {
+        console.error('Failed to fetch admin order count:', err)
+      }
+    }
+    fetchCount()
+    const timer = setInterval(fetchCount, 30000)
+    return () => clearInterval(timer)
+  }, [token])
+
+  const navWithCounts = NAV.map(group => ({
+    ...group,
+    items: group.items.map(item => {
+      if (item.to === '/admin/orders') return { ...item, badge: pendingOrders }
+      return item
+    })
+  }))
 
   return (
     <aside className="w-[260px] min-h-screen bg-white border-r border-[#fce7ef] fixed top-0 left-0 z-40 flex flex-col shadow-sm">
@@ -45,7 +74,7 @@ export default function Sidebar() {
         </div>
       </div>
       <nav className="flex-1 px-2.5 py-3 overflow-y-auto">
-        {NAV.map(group => (
+        {navWithCounts.map(group => (
           <div key={group.section}>
             <div className="px-2 pt-3 pb-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-text-muted">
               {group.section}
@@ -63,7 +92,7 @@ export default function Sidebar() {
                   <Icon size={16} />
                 </span>
                 {label}
-                {badge !== undefined && (
+                {badge !== undefined && badge > 0 && (
                   <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary text-white">
                     {badge}
                   </span>

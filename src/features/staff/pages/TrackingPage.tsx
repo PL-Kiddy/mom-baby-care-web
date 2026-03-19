@@ -147,7 +147,13 @@ export default function TrackingPage() {
                         </div>
                       </td>
                       <td className="text-right">
-                        <button className="btn-icon p-2 hover:bg-[var(--surface2)] text-[var(--muted)] hover:text-[var(--accent)]">
+                        <button 
+                          className="btn-icon p-2 hover:bg-[var(--surface2)] text-[var(--muted)] hover:text-[var(--accent)]"
+                          onClick={(e) => {
+                             e.stopPropagation();
+                             setSelected(o);
+                          }}
+                        >
                           <IconEye size={16} />
                         </button>
                       </td>

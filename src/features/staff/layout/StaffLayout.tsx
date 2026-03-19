@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation, NavLink, useNavigate } from 'react-router-dom'
 import {
   IconOrder, IconTruck, IconInventory, IconReport,
@@ -37,9 +38,53 @@ const NAV: NavGroup[] = [
 
 export default function StaffLayout() {
   const { pathname } = useLocation()
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
   const navigate = useNavigate()
+  const [counts, setCounts] = useState({ orders: 0, reports: 0, chat: 0 })
   const initials = user?.name.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase() ?? 'S'
+
+  useEffect(() => {
+    async function fetchCounts() {
+      if (!token) return
+      try {
+        // Fetch Orders
+        const ordersRes = await fetch(`${import.meta.env.VITE_API_URL}/orders/all`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const ordersJson = await ordersRes.json()
+        const pendingOrders = (ordersJson.result || []).filter((o: any) => o.status?.toLowerCase() === 'pending').length
+
+        // Fetch Reports
+        const reportsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/reports`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const reportsJson = await reportsRes.json()
+        const pendingReports = (reportsJson.result || []).filter((r: any) => r.status?.toLowerCase() === 'pending').length
+
+        setCounts({
+          orders: pendingOrders,
+          reports: pendingReports,
+          chat: 1, // Demo value for now
+        })
+      } catch (err) {
+        console.error('Failed to fetch badge counts:', err)
+      }
+    }
+    fetchCounts()
+    // Refresh every 30 seconds for demo feel
+    const timer = setInterval(fetchCounts, 30000)
+    return () => clearInterval(timer)
+  }, [token])
+
+  const navWithCounts = NAV.map(group => ({
+    ...group,
+    items: group.items.map(item => {
+      if (item.to === '/staff/orders') return { ...item, badge: counts.orders }
+      if (item.to === '/staff/reports') return { ...item, badge: counts.reports }
+      if (item.to === '/staff/chat') return { ...item, badge: counts.chat }
+      return item
+    })
+  }))
 
   return (
     <div className="flex min-h-screen">
@@ -77,7 +122,7 @@ export default function StaffLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2.5 py-3">
-          {NAV.map(group => (
+          {navWithCounts.map(group => (
             <div key={group.section}>
               <div className="px-2.5 pb-1 pt-3 text-[9px] font-semibold uppercase tracking-[2px] text-[var(--muted)]">
                 {group.section}
@@ -100,7 +145,7 @@ export default function StaffLayout() {
                     <Icon size={16} />
                   </span>
                   {label}
-                  {badge !== undefined && (
+                  {badge !== undefined && badge > 0 && (
                     <span className="ml-auto rounded-[20px] bg-[var(--accent)] px-1.5 py-[2px] text-[9px] font-bold text-[#0b0e18]">
                       {badge}
                     </span>

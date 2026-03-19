@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../shared/hooks/useAuth'
-import { getAllOrdersApi } from '../services/adminService'
+import { getAllOrdersApi, updateOrderStatusApi } from '../services/adminService'
 import type { Order, OrderStatus } from '../../../shared/types'
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
@@ -11,10 +12,17 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 }
 
 const TABS = ['Tất cả', 'Chờ xử lý', 'Đang giao', 'Hoàn thành'] as const
+const TAB_STATUS: Record<number, string> = {
+  1: 'pending',
+  2: 'processing',
+  3: 'completed'
+}
 
 export default function RecentOrders() {
   const { token } = useAuth()
-  const [orders, setOrders] = useState<Order[]>([])
+  const navigate = useNavigate()
+  const [allOrders, setAllOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
 
@@ -23,18 +31,25 @@ export default function RecentOrders() {
       if (!token) return
       try {
         const data = await getAllOrdersApi(token)
-        // BE trả về mảng đơn hàng, ta map sang định dạng Order của UI
-        const mapped: Order[] = data.map((item: any) => ({
+        
+        let filteredData = data
+        if (tab !== 0) {
+          filteredData = data.filter((item: any) => item.status?.toLowerCase() === TAB_STATUS[tab])
+        }
+
+        const mapped = filteredData.map((item: any) => ({
+          _rawId: item._id,
           id: `#${item._id.substring(item._id.length - 6).toUpperCase()}`,
           customer: item.user?.name || 'Khách vãng lai',
           phone: item.user?.phone_number || '-',
-          product: item.items?.[0]?.product?.name || 'Nhiều sản phẩm',
-          total: `${item.total_amount?.toLocaleString()} ₫`,
-          status: item.status?.toLowerCase() as OrderStatus,
-          time: new Date(item.createdAt).toLocaleDateString('vi-VN'),
+          product: item.items?.[0]?.product?.name || 'Vài sản phẩm',
+          total: `${(item.final_amount ?? item.total_amount ?? 0).toLocaleString()} ₫`,
+          status: item.status?.toLowerCase(),
+          time: item.created_at ? new Date(item.created_at).toLocaleDateString('vi-VN') : 'Unknown',
           payment: item.payment_method || 'Chưa rõ'
         }))
-        setOrders(mapped.slice(0, 5)) // Chỉ lấy 5 đơn mới nhất cho Dashboard
+        setAllOrders(data)
+        setOrders(mapped.slice(0, 5)) 
       } catch (error) {
         console.error('Failed to load recent orders:', error)
       } finally {
@@ -42,14 +57,26 @@ export default function RecentOrders() {
       }
     }
     loadOrders()
-  }, [token])
+  }, [token, tab])
+
+  const handleApprove = async (orderId: string) => {
+    if (!token) return
+    try {
+      await updateOrderStatusApi(token, orderId, 'processing')
+      alert('Đã duyệt đơn hàng thành công!')
+      // Tải lại bằng cách refresh state
+      setTab(0) // reset tab to trigger reload
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi duyệt đơn')
+    }
+  }
 
 
   return (
     <div className="card">
       <div className="card-header">
         <span className="card-title">Đơn hàng gần đây</span>
-        <span className="card-action">Xem tất cả →</span>
+        <span className="card-action cursor-pointer" onClick={() => navigate('/admin/orders')}>Xem tất cả →</span>
       </div>
       <div className="tab-row">
         {TABS.map((t, i) => (
@@ -75,7 +102,7 @@ export default function RecentOrders() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o: Order) => (
+              {orders.map((o: any) => (
                 <tr key={o.id}>
                   <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{o.id}</td>
                   <td>{o.customer}</td>
@@ -83,19 +110,25 @@ export default function RecentOrders() {
                   <td style={{ color: 'var(--green)', fontWeight: 600 }}>{o.total}</td>
                   <td>
                     <span className={`status-badge ${o.status}`}>
-                      {STATUS_LABEL[o.status]}
+                      {STATUS_LABEL[o.status as OrderStatus] || o.status}
                     </span>
                   </td>
                   <td style={{ color: 'var(--muted)', fontSize: 12 }}>{o.time}</td>
                   <td>
-                    <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                    <span 
+                      className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline"
+                      onClick={() => navigate('/admin/orders')}
+                    >
                       Xem
                     </span>
                     {o.status === 'pending' && (
                       <>
                         {' '}
                         ·{' '}
-                        <span className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline">
+                        <span 
+                          className="cursor-pointer text-[12px] text-[var(--accent)] hover:underline"
+                          onClick={() => handleApprove(o._rawId)}
+                        >
                           Duyệt
                         </span>
                       </>

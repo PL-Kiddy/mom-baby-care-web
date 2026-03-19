@@ -37,6 +37,17 @@ export async function getAllOrdersApi(token: string) {
   return json.result
 }
 
+export async function updateOrderStatusApi(token: string, orderId: string, status: string) {
+  const res = await fetch(`${BASE_URL}/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+    body: JSON.stringify({ status }),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể cập nhật trạng thái đơn hàng')
+  return json.result
+}
+
 export async function getProductsApi(token: string) {
   const res = await fetch(`${BASE_URL}/api/products`, {
     headers: authHeaders(token),
@@ -78,6 +89,68 @@ export async function createOrderApi(token: string, data: any) {
   })
   const json = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(json.message ?? 'Không thể tạo đơn hàng')
+  return json.result
+}
+
+export async function createProductApi(token: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/products`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể tạo sản phẩm')
+  return json.result
+}
+
+export async function updateProductApi(token: string, id: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/products/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể cập nhật sản phẩm')
+  return json.result
+}
+
+export async function deleteProductApi(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể xóa sản phẩm')
+  return json.result
+}
+export async function deleteVoucherApi(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/vouchers/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể xóa voucher')
+  return json.result
+}
+
+export async function deletePostApi(token: string, id: string) {
+  const res = await fetch(`${BASE_URL}/api/posts/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể xóa bài viết')
+  return json.result
+}
+
+export async function updatePostApi(token: string, id: string, data: any) {
+  const res = await fetch(`${BASE_URL}/api/posts/${id}`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.message ?? 'Không thể cập nhật bài viết')
   return json.result
 }
 

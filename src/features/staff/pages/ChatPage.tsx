@@ -171,7 +171,11 @@ export default function ChatPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="btn btn-secondary !p-2 rounded-lg" title="Làm mới">
+            <button 
+              className="btn btn-secondary !p-2 rounded-lg" 
+              title="Làm mới"
+              onClick={() => alert('Đang làm mới cuộc trò chuyện...')}
+            >
                <IconRefresh size={16} />
             </button>
           </div>

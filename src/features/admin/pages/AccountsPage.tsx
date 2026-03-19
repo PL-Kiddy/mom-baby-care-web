@@ -4,6 +4,8 @@ import { useAuth } from '../../../shared/hooks/useAuth'
 import { getAllUsersApi } from '../services/adminService'
 import { registerApi } from '../../auth/services/authService'
 import Modal from '../../../shared/components/Modal'
+import { exportToCSV } from '../../../shared/utils/exportUtils'
+import { IconDownload } from '../../../shared/components/Icons'
 
 const ROLE_LABEL: Record<number, string> = {
   3: 'Admin',
@@ -28,6 +30,7 @@ export default function AccountsPage() {
   const [tab, setTab]     = useState(0)
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<any>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -37,6 +40,7 @@ export default function AccountsPage() {
     confirm_password: '',
     date_of_birth: '',
     gender: 'male' as 'male' | 'female' | 'other',
+    phone_number: '',
     role: 1, // Default to Member
   })
   const [submitting, setSubmitting] = useState(false)
@@ -64,17 +68,22 @@ export default function AccountsPage() {
     }
     setSubmitting(true)
     try {
+      // Format date to DD/MM/YYYY for backend
+      const [y, m, d] = formData.date_of_birth.split('-')
+      const formattedDate = `${d}/${m}/${y}`
+
       await registerApi({
         ...formData,
-        Address: {
+        date_of_birth: formattedDate,
+        address: {
           street: 'N/A',
           ward: 'N/A',
           district: 'N/A',
           city: 'N/A',
           country: 'Vietnam'
-        },
-        phone_number: '0123456789'
+        }
       })
+      alert('Tạo tài khoản thành công!')
       setIsModalOpen(false)
       loadAccounts()
       setFormData({
@@ -84,6 +93,7 @@ export default function AccountsPage() {
         confirm_password: '',
         date_of_birth: '',
         gender: 'male',
+        phone_number: '',
         role: 1,
       })
     } catch (err: any) {
@@ -91,6 +101,25 @@ export default function AccountsPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleExport = () => {
+    const headers = [
+      { key: '_id', label: 'ID' },
+      { key: 'name', label: 'Họ tên' },
+      { key: 'email', label: 'Email' },
+      { key: 'roleLabel', label: 'Vai trò' },
+      { key: 'created_at', label: 'Ngày tham gia' },
+      { key: 'verifyLabel', label: 'Xác thực' },
+    ]
+
+    const exportData = filtered.map(a => ({
+      ...a,
+      roleLabel: ROLE_LABEL[a.role] || 'Member',
+      verifyLabel: a.verify === 1 ? 'Đã xác thực' : 'Chưa xác thực'
+    }))
+
+    exportToCSV(exportData, headers, 'Danh_sach_tai_khoan')
   }
 
   const filtered = accounts.filter((a) => {
@@ -115,7 +144,10 @@ export default function AccountsPage() {
         <button className="btn btn-secondary" onClick={loadAccounts} disabled={loading}>
           <IconRefresh size={14} className={loading ? 'animate-spin' : ''} />
         </button>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport} disabled={loading || filtered.length === 0}>
+            <IconDownload size={14} /> Xuất Excel
+          </button>
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
             <IconPlus size={14} /> Tạo tài khoản
           </button>
@@ -168,7 +200,10 @@ export default function AccountsPage() {
                       <span className="status-badge active">Hoạt động</span>
                     </td>
                     <td>
-                      <button className="text-xs text-primary hover:underline">Xem</button>
+                      <button 
+                        className="text-xs text-primary hover:underline font-bold"
+                        onClick={() => setSelectedAccount(a)}
+                      >Xem chi tiết</button>
                     </td>
                   </tr>
                 ))}
@@ -210,6 +245,9 @@ export default function AccountsPage() {
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
               />
+              <p className="text-[10px] text-text-muted mt-1">
+                * Ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+              </p>
             </div>
             <div>
               <label className="label">Xác nhận mật khẩu</label>
@@ -227,6 +265,15 @@ export default function AccountsPage() {
                 required type="date" className="input w-full" 
                 value={formData.date_of_birth}
                 onChange={e => setFormData({...formData, date_of_birth: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="label">Số điện thoại</label>
+              <input 
+                required className="input w-full" 
+                placeholder="0901234567" 
+                value={formData.phone_number}
+                onChange={e => setFormData({...formData, phone_number: e.target.value})}
               />
             </div>
             <div>
@@ -267,6 +314,70 @@ export default function AccountsPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal 
+        isOpen={!!selectedAccount} 
+        onClose={() => setSelectedAccount(null)} 
+        title="Thông Tin Tài Khoản"
+      >
+        {selectedAccount && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 border-b border-pink-50 pb-4">
+              <div className="size-16 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined text-[32px]">person</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-text-main">{selectedAccount.name}</h3>
+                <p className="text-sm text-text-muted">{selectedAccount.email}</p>
+                <span className={`status-badge ${ROLE_CLASS[selectedAccount.role]} mt-1 inline-block`}>
+                  {ROLE_LABEL[selectedAccount.role]}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-text-muted uppercase tracking-wider font-bold mb-1">Ngày sinh</p>
+                <p className="font-bold text-text-main">
+                  {selectedAccount.date_of_birth ? new Date(selectedAccount.date_of_birth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-text-muted uppercase tracking-wider font-bold mb-1">Giới tính</p>
+                <p className="font-bold text-text-main">
+                  {selectedAccount.gender === 'male' ? 'Nam' : selectedAccount.gender === 'female' ? 'Nữ' : 'Khác'}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-text-muted uppercase tracking-wider font-bold mb-1">Số điện thoại</p>
+                <p className="font-bold text-text-main">{selectedAccount.phone_number || '0901234567'}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-text-muted uppercase tracking-wider font-bold mb-1">Trạng thái</p>
+                <p className="font-bold text-teal-600">Đang hoạt động</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <p className="text-xs text-text-muted uppercase tracking-wider font-bold mb-1">Địa chỉ</p>
+              <p className="font-bold text-text-main">
+                {selectedAccount.address ? 
+                  `${selectedAccount.address.street}, ${selectedAccount.address.ward}, ${selectedAccount.address.district}, ${selectedAccount.address.city}` 
+                  : 'Chưa cập nhật'}
+              </p>
+            </div>
+
+            <div className="pt-2">
+               <button 
+                className="btn btn-primary w-full font-bold"
+                onClick={() => setSelectedAccount(null)}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

@@ -50,7 +50,7 @@ export interface Product {
   id?: string
   _id: string
   name: string
-  category: string
+  category: string | { _id: string; name: string }
   price: number
   stock: number
   sold: number
@@ -148,11 +148,12 @@ export interface InventoryItem {
 
 export interface ReportItem {
   id: string
-  type: 'order' | 'return' | 'complaint' | 'feedback'
+  _id?: string
+  type: 'order' | 'product' | 'comment' | 'other'
   customer: string
   orderId: string
   content: string
-  status: 'open' | 'processing' | 'resolved'
+  status: 'pending' | 'processing' | 'resolved' | 'rejected'
   priority: 'low' | 'medium' | 'high'
   createdAt: string
 }

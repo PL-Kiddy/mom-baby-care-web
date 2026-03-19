@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { IconPlus, IconRefresh } from '../../../shared/components/Icons'
 import { useAuth } from '../../../shared/hooks/useAuth'
-import { createVoucherApi } from '../services/adminService'
+import { createVoucherApi, deleteVoucherApi } from '../services/adminService'
 import Modal from '../../../shared/components/Modal'
+import { exportToCSV } from '../../../shared/utils/exportUtils'
+import { IconDownload } from '../../../shared/components/Icons'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
 
@@ -56,6 +58,7 @@ export default function VouchersPage() {
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
       })
+      alert('Tạo voucher thành công!')
       setIsModalOpen(false)
       loadVouchers()
       setFormData({
@@ -74,9 +77,39 @@ export default function VouchersPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('Bạn có chắc chắn muốn xóa voucher này không?')) return
+    
+    // Lưu ý: BE hiện tại chưa hỗ trợ endpoint DELETE /api/vouchers/:id
+    alert('Tính năng xóa voucher đang chờ Backend hỗ trợ. Vui lòng liên hệ bộ phận BE để cấp quyền này.')
+    
+    /* 
+    try {
+      await deleteVoucherApi(token, id)
+      alert('Xóa voucher thành công!')
+      loadVouchers()
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi xóa voucher')
+    }
+    */
+  }
+
   const filtered = vouchers.filter((v) =>
     v.code.toLowerCase().includes(search.toLowerCase())
   )
+
+  const handleExport = () => {
+    const headers = [
+      { key: 'code', label: 'Mã voucher' },
+      { key: 'discount_type', label: 'Loại' },
+      { key: 'discount_value', label: 'Giá trị' },
+      { key: 'min_order_value', label: 'Đơn tối thiểu' },
+      { key: 'usage_limit', label: 'Giới hạn' },
+      { key: 'end_date', label: 'Hết hạn' },
+    ]
+    exportToCSV(filtered, headers, 'Danh_sach_voucher')
+  }
 
   return (
     <div>
@@ -91,7 +124,10 @@ export default function VouchersPage() {
         <button className="btn btn-secondary" onClick={loadVouchers} disabled={loading}>
           <IconRefresh size={14} className={loading ? 'animate-spin' : ''} />
         </button>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={handleExport} disabled={loading || filtered.length === 0}>
+            <IconDownload size={14} /> Xuất Excel
+          </button>
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
             <IconPlus size={14} /> Tạo voucher
           </button>
@@ -141,7 +177,10 @@ export default function VouchersPage() {
                       </span>
                     </td>
                     <td>
-                      <button className="text-xs text-primary hover:underline">Sửa</button>
+                      <button 
+                        className="text-xs text-primary hover:underline font-bold"
+                        onClick={() => handleDelete(v._id)}
+                      >Xóa</button>
                     </td>
                   </tr>
                 ))}

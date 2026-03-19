@@ -55,7 +55,15 @@ export async function registerApi(data: any): Promise<any> {
     body: JSON.stringify(data),
   })
   const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.message ?? 'Đăng ký thất bại')
+  if (!res.ok) {
+    if (json.errors) {
+      const errorDetail = Object.values(json.errors)
+        .map((err: any) => (typeof err === 'object' ? err.msg : err))
+        .join(', ')
+      throw new Error(`${json.message}: ${errorDetail}`)
+    }
+    throw new Error(json.message ?? 'Đăng ký thất bại')
+  }
   return json.result
 }
 
