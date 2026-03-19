@@ -48,7 +48,6 @@ const CustomerRegisterPage = () => {
           district: '',
           city: '',
           country: 'Việt Nam',
-          zipcode: '',
         },
       })
       setSuccess('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.')
